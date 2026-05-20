@@ -1,4 +1,4 @@
-package com.team4tech.evbatteryswap.dto;
+package com.team4tech.evbatteryswap.dto.response;
 
 public record LoginResponse(
         String accessToken,

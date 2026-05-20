@@ -1,7 +1,7 @@
 package com.team4tech.evbatteryswap.controller;
 
-import com.team4tech.evbatteryswap.dto.LoginRequest;
-import com.team4tech.evbatteryswap.dto.LoginResponse;
+import com.team4tech.evbatteryswap.dto.request.LoginRequest;
+import com.team4tech.evbatteryswap.dto.response.LoginResponse;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
