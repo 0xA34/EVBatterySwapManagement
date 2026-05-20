@@ -1,4 +1,4 @@
-package com.team4tech.evbatteryswap;
+package com.team4tech.evbatteryswap.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
