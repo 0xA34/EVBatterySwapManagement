@@ -28,6 +28,18 @@ public class Station {
     @Column(name = "address", nullable = false, length = Integer.MAX_VALUE)
     private String address;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quan")
+    private Quanhuyen quan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "province")
+    private Tinhthanh province;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "phuongxa")
+    private Phuongxa phuongxa;
+
     @NotNull
     @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
     private String status;
