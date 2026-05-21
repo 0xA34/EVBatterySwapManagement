@@ -6,6 +6,7 @@ import com.team4tech.evbatteryswap.security.JwtTokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,12 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:5173")
 @Tag(name = "Authentication", description = "Login to obtain a JWT token")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     @Operation(

@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.security;
 
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,10 +15,10 @@ import java.util.List;
 
 
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
