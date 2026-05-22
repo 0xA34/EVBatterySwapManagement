@@ -6,18 +6,14 @@ import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -50,38 +46,16 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<User> filterUsers(String searchKeyword, Pageable pageable) {
-        return userRepository.findAll(
-                (Specification<User>) (root, query, criteriaBuilder) -> {
-                    List<Predicate> predicates = new ArrayList<>();
+    public Page<User> filterUsers(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) return userRepository.findAll(pageable);
+        return userRepository.findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                keyword, keyword, keyword, pageable);
+    }
 
-                    if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-                        String likePattern =
-                                "%" + searchKeyword.toLowerCase() + "%";
-                        predicates.add(
-                                criteriaBuilder.or(
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("username")),
-                                                likePattern
-                                        ),
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("fullName")),
-                                                likePattern
-                                        ),
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("email")),
-                                                likePattern
-                                        )
-                                )
-                        );
-                    }
-
-                    return criteriaBuilder.and(
-                            predicates.toArray(new Predicate[0])
-                    );
-                },
-                pageable
-        );
+    @Override
+    @Transactional(readOnly = true)
+    public Page<User> searchByUsername(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
     }
 
     @Override

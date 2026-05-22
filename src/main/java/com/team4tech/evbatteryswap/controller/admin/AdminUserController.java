@@ -45,16 +45,26 @@ public class AdminUserController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(
-        summary = "Tìm người dùng theo ID",
-        description = "Trả về thông tin của một người dùng duy nhất dựa trên ID của họ. Trả về mã lỗi 404 nếu người dùng không tồn tại."
-    )
+    @Operation(summary = "Tìm user theo ID")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable int id) {
         return userService.findById(id)
                 .map(UserResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Tìm kiếm user theo username", description = "Tìm kiếm không phân biệt hoa thường, có phân trang.")
+    @GetMapping("/search")
+    public ResponseEntity<Page<UserResponse>> searchUsers(
+            @RequestParam String username,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        Page<UserResponse> result = userService
+                .searchByUsername(username, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .map(UserResponse::from);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(
