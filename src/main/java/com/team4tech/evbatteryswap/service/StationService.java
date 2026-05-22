@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,11 +17,7 @@ public class StationService implements IStationService {
     private final StationRepository stationRepository;
 
     @Override
-    public Page<Station> findAll(Pageable pageable) {
-        return stationRepository.findAll(pageable);
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public Page<Station> findStations(
             @Param("status") String status,
             @Param("quan") Integer quan,
