@@ -49,6 +49,12 @@ public class StationService implements IStationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<Station> searchByKeyword(String keyword, Pageable pageable) {
+        return stationRepository.searchByKeyword(keyword, pageable);
+    }
+
+    @Override
     @Transactional
     public Station createStation(StationRequest request) {
         Station station = new Station();

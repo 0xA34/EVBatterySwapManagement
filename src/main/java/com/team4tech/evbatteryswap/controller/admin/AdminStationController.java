@@ -61,6 +61,22 @@ public class AdminStationController {
     }
 
     @Operation(
+        summary = "Tìm kiếm trạm theo từ khóa",
+        description = "Tìm kiếm trạm đổi pin theo từ khóa (tên hoặc địa chỉ). Hỗ trợ phân trang."
+    )
+    @GetMapping("/search")
+    public ResponseEntity<Page<StationResponse>> searchStations(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        Page<StationResponse> result = stationService
+                .searchByKeyword(keyword, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .map(StationResponse::from);
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(
         summary = "Tạo trạm mới",
         description = "Tạo một trạm đổi pin mới. Trả về mã 400 nếu dữ liệu không hợp lệ."
     )

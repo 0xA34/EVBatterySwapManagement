@@ -22,6 +22,8 @@ public interface IStationService {
 
     Optional<Station> findById(int id);
 
+    Page<Station> searchByKeyword(String keyword, Pageable pageable);
+
     Station createStation(StationRequest request);
 
     Station updateStation(int id, StationRequest request);

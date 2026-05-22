@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.service;
 
-import com.team4tech.evbatteryswap.dto.request.UserRequest;
+import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
+import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
@@ -85,16 +86,13 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public User createUser(UserRequest request) {
+    public User createUser(UserRegisterRequest request) {
         if (userRepository.findByUsername(request.username()).isPresent()) {
             throw new IllegalArgumentException("Username '" + request.username() + "' already exists");
         }
         if (request.email() != null && !request.email().isBlank()
                 && userRepository.findByEmail(request.email()).isPresent()) {
             throw new IllegalArgumentException("Email '" + request.email() + "' already in use");
-        }
-        if (request.password() == null || request.password().isBlank()) {
-            throw new IllegalArgumentException("Password is required when creating a user");
         }
 
         User user = new User();
@@ -113,16 +111,9 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public User updateUser(int id, UserRequest request) {
+    public User updateUser(int id, UserOnChangeRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-
-        // kiem tra username co trung khong?
-        userRepository.findByUsername(request.username())
-                .filter(existing -> !existing.getId().equals(id))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Username '" + request.username() + "' already exists");
-                });
 
         // kiem tra email co trung khong?
         if (request.email() != null && !request.email().isBlank()) {
@@ -133,7 +124,6 @@ public class UserService implements IUserService {
                     });
         }
 
-        user.setUsername(request.username());
         user.setFullName(request.fullName());
         user.setEmail(request.email());
         user.setPhoneNumber(request.phoneNumber());

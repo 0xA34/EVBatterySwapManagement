@@ -29,6 +29,13 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
     );
 
 
+    @Query("SELECT s FROM Station s WHERE " +
+            "LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.address) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Station> searchByKeyword(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
 
 //    Optional<Station> findByName(String name);
 //    Page<Station> findByStatus(String status, Pageable pageable);

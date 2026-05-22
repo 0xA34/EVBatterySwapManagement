@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.controller.admin;
 
-import com.team4tech.evbatteryswap.dto.request.UserRequest;
+import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
+import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.service.UserService;
@@ -61,7 +62,7 @@ public class AdminUserController {
         description = "Tạo tài khoản người dùng mới. Trả về mã 400 nếu tên người dùng hoặc email đã tồn tại."
     )
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRegisterRequest request) {
         try {
             User created = userService.createUser(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
@@ -77,7 +78,7 @@ public class AdminUserController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(
             @PathVariable int id,
-            @Valid @RequestBody UserRequest request
+            @Valid @RequestBody UserOnChangeRequest request
     ) {
         try {
             User updated = userService.updateUser(id, request);
