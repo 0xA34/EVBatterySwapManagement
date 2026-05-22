@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,12 +45,11 @@ public class UserService implements IUserService {
         return userRepository.findByEmail(email);
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public Page<User> filterUsers(String keyword, Pageable pageable) {
-        if (keyword == null || keyword.isBlank()) return userRepository.findAll(pageable);
-        return userRepository.findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                keyword, keyword, keyword, pageable);
+    public Page<User> filterByKeyword(@Param("keyword") String keyword, Pageable pageable) {
+        return userRepository.filterByKeyword(keyword, pageable);
     }
 
     @Override
@@ -122,5 +122,20 @@ public class UserService implements IUserService {
         }
         userRepository.deleteById(id);
     }
+
+
+    @Override
+    public boolean updateEmail(@Param("id") int id, @Param("newEmail") String newEmail) {
+        int rowsAffected = userRepository.updateEmail(id, newEmail);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public boolean updatePhone(@Param("id") int id, @Param("newPhone") String newPhone) {
+        int rowsAffected =  userRepository.updatePhone(id, newPhone);
+        return rowsAffected > 0;
+    }
+
+
 }
 

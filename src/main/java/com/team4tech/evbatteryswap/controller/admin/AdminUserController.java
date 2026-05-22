@@ -40,7 +40,7 @@ public class AdminUserController {
             @RequestParam(required = false)    String search
     ) {
         Page<UserResponse> result = userService
-                .filterUsers(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .filterByKeyword(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
                 .map(UserResponse::from);
         return ResponseEntity.ok(result);
     }

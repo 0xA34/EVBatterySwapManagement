@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -29,8 +26,7 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/info")
-    public ResponseEntity<UserResponse> getInfo(HttpServletRequest request)
-    {
+    public ResponseEntity<UserResponse> getInfo(HttpServletRequest request) {
         String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
         String username = jwtTokenProvider.getUsernameFromToken(token);
 
@@ -40,6 +36,20 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+
+    @PostMapping("/update-email")
+    public ResponseEntity<String> updateEmails(
+            HttpServletRequest request,
+            @RequestParam() String newEmail
+    ) {
+        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        Integer id = userService.findByUsername(username).get().getId();
+        if (userService.updateEmail(id, newEmail)) {
+            return ResponseEntity.ok().body("Email Updated");
+        }
+        return ResponseEntity.badRequest().body("Email already exists");
+    }
 
 
 }

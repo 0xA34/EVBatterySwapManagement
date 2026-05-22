@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface StationRepository extends JpaRepository<Station, Integer> {
-    Page<Station> findAll(Pageable pageable);
 
     @Query("SELECT s FROM Station s WHERE " +
             "(:status IS NULL OR s.status = :status) AND " +
