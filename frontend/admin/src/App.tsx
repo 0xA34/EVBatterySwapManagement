@@ -5,6 +5,7 @@ import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import RequireAuth from "./components/auth/RequireAuth";
 
 // EV Battery Swap Pages
 import StationManagement from "./pages/EVBattery/StationManagement";
@@ -22,17 +23,19 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<AppLayout />}>
+              <Route index path="/" element={<Home />} />
 
-            {/* EV Battery Swap */}
-            <Route path="/stations" element={<StationManagement />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/subscriptions" element={<SubscriptionManagement />} />
-            <Route path="/reports" element={<ReportsDashboard />} />
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/account-settings" element={<AccountSettings />} />
-            <Route path="/support" element={<Support />} />
+              {/* EV Battery Swap */}
+              <Route path="/stations" element={<StationManagement />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/subscriptions" element={<SubscriptionManagement />} />
+              <Route path="/reports" element={<ReportsDashboard />} />
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/support" element={<Support />} />
+            </Route>
           </Route>
 
           {/* Auth Layout */}
