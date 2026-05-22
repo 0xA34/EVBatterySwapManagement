@@ -6,7 +6,7 @@ import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,28 +20,35 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService implements IUserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
 
+    @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public Optional<User> findById(int id) {
         return userRepository.findById(id);
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<User> filterUsers(String searchKeyword, Pageable pageable) {
         return userRepository.findAll(
                 (Specification<User>) (root, query, criteriaBuilder) -> {
