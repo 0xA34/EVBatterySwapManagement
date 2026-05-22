@@ -13,9 +13,7 @@ public record UserResponse(
         String phoneNumber,
         BigDecimal walletBalance,
         String role,
-        String status,
-        Instant createdAt,
-        Instant updatedAt
+        String status
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -26,9 +24,7 @@ public record UserResponse(
                 user.getPhoneNumber(),
                 user.getWalletBalance(),
                 user.getRole(),
-                user.getStatus(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getStatus()
         );
     }
 }
