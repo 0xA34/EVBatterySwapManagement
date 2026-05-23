@@ -27,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             "LOWER(u.email)    LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<User> filterByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query("SELECT u.password FROM User u WHERE u.id = :id")
+    Optional<String> findPasswordById(@Param("id") int id);
 
     @Modifying
     @Transactional
@@ -38,5 +40,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("UPDATE User u SET u.phoneNumber = :newPhone WHERE u.id = :id")
     int updatePhone(@Param("id") int id, @Param("newPhone") String newPhone);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.password = :password, u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :id")
+    int updatePasswordById(@Param("id") int id, @Param("password") String password);
 
 }

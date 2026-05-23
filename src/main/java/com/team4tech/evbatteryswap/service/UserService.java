@@ -137,5 +137,19 @@ public class UserService implements IUserService {
     }
 
 
+    @Override
+    public boolean updatePasswordById(@Param("id") int id, @Param("password") String newPassword) {
+        int rowsAffected =  userRepository.updatePasswordById(id, newPassword);
+        return rowsAffected > 0;
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<String> findPasswordById(@Param("id") int id) {
+        return userRepository.findPasswordById(id);
+    }
+
+
 }
 
