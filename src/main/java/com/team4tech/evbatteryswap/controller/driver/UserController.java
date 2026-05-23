@@ -52,4 +52,20 @@ public class UserController {
     }
 
 
+    @PostMapping("/update-phone")
+    public ResponseEntity<String> updatePhones(
+            HttpServletRequest request,
+            @RequestParam() String newPhone
+    ) {
+        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        Integer id = userService.findByUsername(username).get().getId();
+        if (userService.updatePhone(id, newPhone)) {
+            return ResponseEntity.ok().body("Phone Updated");
+        }
+        return ResponseEntity.badRequest().body("Phone already exists");
+    }
+
+
+
 }
