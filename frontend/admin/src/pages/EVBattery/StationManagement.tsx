@@ -1,85 +1,168 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
+import { useAuth } from "../../context/AuthContext";
 
-type StationStatus = "Hoạt động tốt" | "Thiếu pin" | "Đầy pin" | "Bảo trì";
+type StationStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE";
 
 type Station = {
-  id: string;
+  id: number;
   name: string;
-  location: string;
-  currentBatteries: number;
-  maxBatteries: number;
+  address: string;
+  quanId?: number;
+  quanName?: string;
+  provinceId?: number;
+  provinceName?: string;
+  phuongxaId?: number;
+  phuongxaName?: string;
   status: StationStatus;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
-const initialStations: Station[] = [
-  {
-    id: "1",
-    name: "Trạm Q1 - Nguyễn Huệ",
-    location: "Quận 1, TP.HCM",
-    currentBatteries: 45,
-    maxBatteries: 50,
-    status: "Hoạt động tốt"
-  },
-  {
-    id: "2",
-    name: "Trạm Q2 - Thảo Điền",
-    location: "Quận 2, TP.HCM",
-    currentBatteries: 10,
-    maxBatteries: 50,
-    status: "Thiếu pin"
-  }
-];
-
 export default function StationManagement() {
-  const [stations, setStations] = useState<Station[]>(initialStations);
+  const { token } = useAuth();
+  const [stations, setStations] = useState<Station[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [currentKeyword, setCurrentKeyword] = useState("");
+  const [searchIdInput, setSearchIdInput] = useState("");
+  const [currentSearchId, setCurrentSearchId] = useState("");
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
-    location: "",
-    currentBatteries: 0,
-    maxBatteries: 50,
-    status: "Hoạt động tốt" as StationStatus
+    address: "",
+    quan: 0,
+    province: 0,
+    phuongxa: 0,
+    status: "ACTIVE" as StationStatus
   });
 
-  const getStatusBadgeColor = (status: StationStatus) => {
+  const fetchStations = async (page: number = 0, keyword: string = "", searchId: string = "") => {
+    setIsLoading(true);
+    setError("");
+    try {
+      if (searchId.trim()) {
+        const response = await fetch(`/api/admin/stations/${searchId.trim()}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Không tìm thấy trạm với ID này");
+          }
+          throw new Error("Lỗi khi tìm kiếm trạm");
+        }
+        const data = await response.json();
+        setStations([data]);
+        setTotalPages(1);
+        setCurrentPage(0);
+      } else {
+        const url = keyword.trim() 
+          ? `/api/admin/stations/search?keyword=${encodeURIComponent(keyword.trim())}&page=${page}&size=15`
+          : `/api/admin/stations?page=${page}&size=15`;
+          
+        const response = await fetch(url, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Không thể tải danh sách trạm");
+        }
+        const data = await response.json();
+        setStations(data.content || []);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(data.number || 0);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      setStations([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchStations(currentPage, currentKeyword, currentSearchId);
+    }
+  }, [token, currentPage, currentKeyword, currentSearchId]);
+
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case "Hoạt động tốt":
+      case "ACTIVE":
         return "bg-success/10 text-success dark:bg-green-500/20 dark:text-green-400";
-      case "Thiếu pin":
+      case "INACTIVE":
         return "bg-warning/10 text-warning dark:bg-yellow-500/20 dark:text-yellow-400";
-      case "Đầy pin":
-        return "bg-info/10 text-info dark:bg-blue-500/20 dark:text-blue-400";
-      case "Bảo trì":
+      case "MAINTENANCE":
         return "bg-error/10 text-error dark:bg-red-500/20 dark:text-red-400";
       default:
         return "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400";
     }
   };
 
-  const handleOpenModal = (station?: Station) => {
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "ACTIVE": return "Hoạt động";
+      case "INACTIVE": return "Ngừng hoạt động";
+      case "MAINTENANCE": return "Bảo trì";
+      default: return status;
+    }
+  };
+
+  const handleOpenModal = async (station?: Station) => {
     if (station) {
-      setEditingStation(station);
-      setFormData({
-        name: station.name,
-        location: station.location,
-        currentBatteries: station.currentBatteries,
-        maxBatteries: station.maxBatteries,
-        status: station.status
-      });
+      try {
+        const response = await fetch(`/api/admin/stations/${station.id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const detailData = await response.json();
+          setEditingStation(detailData);
+          setFormData({
+            name: detailData.name,
+            address: detailData.address || "",
+            quan: detailData.quanId || 0,
+            province: detailData.provinceId || 0,
+            phuongxa: detailData.phuongxaId || 0,
+            status: detailData.status
+          });
+        } else {
+          throw new Error("Cannot fetch station detail");
+        }
+      } catch (err) {
+        setEditingStation(station);
+        setFormData({
+          name: station.name,
+          address: station.address || "",
+          quan: station.quanId || 0,
+          province: station.provinceId || 0,
+          phuongxa: station.phuongxaId || 0,
+          status: station.status
+        });
+      }
     } else {
       setEditingStation(null);
       setFormData({
         name: "",
-        location: "",
-        currentBatteries: 0,
-        maxBatteries: 50,
-        status: "Hoạt động tốt"
+        address: "",
+        quan: 0,
+        province: 0,
+        phuongxa: 0,
+        status: "ACTIVE"
       });
     }
     setIsModalOpen(true);
@@ -90,31 +173,62 @@ export default function StationManagement() {
     setEditingStation(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const url = editingStation 
+      ? `/api/admin/stations/${editingStation.id}`
+      : `/api/admin/stations`;
     
-    if (editingStation) {
-      // Update
-      setStations(stations.map(s => 
-        s.id === editingStation.id 
-          ? { ...editingStation, ...formData }
-          : s
-      ));
-    } else {
-      // Create
-      const newStation: Station = {
-        id: Date.now().toString(),
-        ...formData
-      };
-      setStations([...stations, newStation]);
+    const method = editingStation ? "PUT" : "POST";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Lỗi khi lưu trạm");
+      }
+      
+      handleCloseModal();
+      fetchStations(currentPage, currentKeyword, currentSearchId);
+    } catch (err: any) {
+      alert(err.message);
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Bạn có chắc chắn muốn xóa trạm này không?")) {
-      setStations(stations.filter(s => s.id !== id));
+      try {
+        const response = await fetch(`/api/admin/stations/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error("Lỗi khi xóa trạm");
+        }
+        
+        fetchStations(currentPage, currentKeyword, currentSearchId);
+      } catch (err: any) {
+        alert(err.message);
+      }
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentSearchId(searchIdInput);
+    setCurrentKeyword(searchInput);
+    setCurrentPage(0); 
   };
 
   return (
@@ -126,14 +240,47 @@ export default function StationManagement() {
       <PageBreadcrumb pageTitle="Quản Lý Trạm Đổi Pin" />
 
       <div className="space-y-6">
-        <div className="flex justify-end">
-          <button 
-            onClick={() => handleOpenModal()}
-            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
-          >
-            + Thêm trạm mới
-          </button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            Danh sách các trạm {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <input
+                type="number"
+                placeholder="ID trạm..."
+                value={searchIdInput}
+                onChange={(e) => setSearchIdInput(e.target.value)}
+                className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+              <input
+                type="text"
+                placeholder="Từ khóa..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+              <button
+                type="submit"
+                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                Tìm
+              </button>
+            </form>
+            <button 
+              onClick={() => handleOpenModal()}
+              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              + Thêm trạm mới
+            </button>
+          </div>
         </div>
+        
+        {error && (
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg dark:bg-red-500/10 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
         <ComponentCard title="Danh sách các trạm">
           <div className="overflow-x-auto">
@@ -141,13 +288,16 @@ export default function StationManagement() {
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50">
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    ID
+                  </th>
+                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
                     Tên Trạm
                   </th>
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
                     Địa Điểm
                   </th>
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Số Lượng Pin
+                    Khu Vực
                   </th>
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
                     Tình Trạng
@@ -160,17 +310,17 @@ export default function StationManagement() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {stations.map((station) => (
                   <tr key={station.id}>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">#{station.id}</td>
                     <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{station.name}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{station.location}</td>
-                    <td className="px-5 py-4 text-sm">
-                      <span className={`font-semibold ${station.currentBatteries < station.maxBatteries * 0.2 ? 'text-error dark:text-red-400' : 'text-gray-800 dark:text-white'}`}>
-                        {station.currentBatteries}
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400">/{station.maxBatteries}</span>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate" title={station.address}>
+                      {station.address}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {station.phuongxaName ? `${station.phuongxaName}, ` : ""}{station.quanName || ""}
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeColor(station.status)}`}>
-                        {station.status}
+                        {getStatusText(station.status)}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-sm">
@@ -190,9 +340,9 @@ export default function StationManagement() {
                   </tr>
                 ))}
                 
-                {stations.length === 0 && (
+                {stations.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-5 py-8 text-center text-gray-500">
                       Chưa có dữ liệu trạm.
                     </td>
                   </tr>
@@ -200,6 +350,31 @@ export default function StationManagement() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-6 px-5 border-t border-gray-100 dark:border-gray-800 pt-4">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Trang {currentPage + 1} / {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                  className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </ComponentCard>
       </div>
 
@@ -227,43 +402,52 @@ export default function StationManagement() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Địa điểm
+                  Địa điểm chi tiết
                 </label>
                 <input 
                   type="text" 
                   required
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="VD: Quận 1, TP.HCM"
+                  placeholder="VD: 9 Tôn Đức Thắng"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Số pin hiện tại
+                    ID Tỉnh/Thành
                   </label>
                   <input 
                     type="number" 
-                    min="0"
-                    max={formData.maxBatteries}
                     required
-                    value={formData.currentBatteries}
-                    onChange={(e) => setFormData({...formData, currentBatteries: Number(e.target.value)})}
+                    value={formData.province}
+                    onChange={(e) => setFormData({...formData, province: Number(e.target.value)})}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Sức chứa (Max)
+                    ID Quận/Huyện
                   </label>
                   <input 
                     type="number" 
-                    min="1"
                     required
-                    value={formData.maxBatteries}
-                    onChange={(e) => setFormData({...formData, maxBatteries: Number(e.target.value)})}
+                    value={formData.quan}
+                    onChange={(e) => setFormData({...formData, quan: Number(e.target.value)})}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    ID Phường/Xã
+                  </label>
+                  <input 
+                    type="number" 
+                    required
+                    value={formData.phuongxa}
+                    onChange={(e) => setFormData({...formData, phuongxa: Number(e.target.value)})}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
@@ -278,10 +462,9 @@ export default function StationManagement() {
                   onChange={(e) => setFormData({...formData, status: e.target.value as StationStatus})}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
-                  <option value="Hoạt động tốt">Hoạt động tốt</option>
-                  <option value="Thiếu pin">Thiếu pin</option>
-                  <option value="Đầy pin">Đầy pin</option>
-                  <option value="Bảo trì">Bảo trì</option>
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="INACTIVE">Ngừng hoạt động</option>
+                  <option value="MAINTENANCE">Bảo trì</option>
                 </select>
               </div>
 

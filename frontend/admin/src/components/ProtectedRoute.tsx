@@ -16,12 +16,10 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return role.toLowerCase().replace(/^role_/, "");
   };
 
-  // Tránh redirect sớm khi app chưa khôi phục phiên từ localStorage
   if (!isAuthInitialized) {
     return null;
   }
 
-  // Nếu chưa đăng nhập, chuyển hướng về trang login
   if (!isAuthenticated) {
     return <Navigate to="/signin" replace />;
   }
@@ -35,6 +33,5 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     }
   }
 
-  // Đủ điều kiện, cho phép render các component con (Dashboard, Layout...)
   return <Outlet />;
 }

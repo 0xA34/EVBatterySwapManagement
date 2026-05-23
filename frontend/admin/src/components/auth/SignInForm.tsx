@@ -22,16 +22,13 @@ export default function SignInForm() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   
-  // Thêm state isLoading
   const [isLoading, setIsLoading] = useState(false);
 
-  // Login Form states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Forgot Password flow states
   const [forgotStep, setForgotStep] = useState<"none" | "email" | "otp" | "reset">("none");
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
@@ -40,7 +37,6 @@ export default function SignInForm() {
   const [forgotError, setForgotError] = useState("");
   const [forgotSuccessMessage, setForgotSuccessMessage] = useState("");
 
-  // Live forgot password validation criteria
   const isForgotLengthValid = newPassword.length >= 8;
   const hasForgotUppercase = /[A-Z]/.test(newPassword);
   const hasForgotLowercase = /[a-z]/.test(newPassword);
@@ -49,7 +45,6 @@ export default function SignInForm() {
 
   const normalizeRole = (role?: string) => role?.toUpperCase().replace(/^ROLE_/, "") ?? "";
 
-  // HÀM XỬ LÝ ĐĂNG NHẬP ĐÃ TÍCH HỢP API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -68,20 +63,19 @@ export default function SignInForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "accept": "*/*",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: email, // API dùng username, ta map từ state email sang
+          username: email, 
           password: password,
         }),
       });
 
       if (!response.ok) {
-        // Cố gắng đọc thông báo lỗi từ server nếu có
         const errorData = await response.json().catch(() => null);
         throw new Error(
           errorData?.message || "Tài khoản hoặc mật khẩu không chính xác!"
@@ -123,7 +117,6 @@ export default function SignInForm() {
     setError(`Đăng nhập qua ${platform} chưa được cấu hình cho giao diện Admin.`);
   };
 
-  // Các hàm Forgot Password giữ nguyên
   const handleForgotEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError("");
