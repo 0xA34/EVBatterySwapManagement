@@ -2,15 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 
+type LoginResponse = {
+  accessToken?: string;
+  token?: string;
+  role?: string;
+};
+
 export default function Login() {
-  // Đổi tên state từ email thành username cho sát với API, hoặc bạn có thể giữ nguyên
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth(); // Vẫn giữ lại nếu bạn cần cập nhật state vào Context sau khi fetch thành công
+  const { login } = useAuth();
   const navigate = useNavigate();
+
+  const normalizeRole = (role?: string) => role?.toUpperCase().replace(/^ROLE_/, '') ?? '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,14 +38,24 @@ export default function Login() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        
-        // --- XỬ LÝ TOKEN Ở ĐÂY ---
-        // Ví dụ API trả về: { "token": "eyJhbG..." }
-        // localStorage.setItem('accessToken', data.token);
-        
-        // Nếu AuthContext của bạn cần cập nhật state, bạn có thể gọi:
-        // login(data.token); 
+        const data = (await response.json()) as LoginResponse;
+        const token = data.accessToken || data.token;
+        const role = normalizeRole(data.role);
+
+        if (!token) {
+          setError('Máy chủ không trả về token đăng nhập hợp lệ.');
+          return;
+        }
+
+        if (role && role !== 'STAFF') {
+          setError('Tài khoản này không có quyền truy cập giao diện Staff.');
+          return;
+        }
+
+        login(token, {
+          username,
+          role: role || 'STAFF',
+        });
 
         navigate('/inventory', { replace: true });
       } else {

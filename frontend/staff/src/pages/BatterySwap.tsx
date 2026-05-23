@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
 const BatterySwap: React.FC = () => {
-  const [step, setStep] = useState(1);
   const [returnStatus, setReturnStatus] = useState('normal');
 
   return (
@@ -69,7 +68,7 @@ const BatterySwap: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col">
            <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-4 border-b pb-2">3. Thanh toán & Xác nhận</h3>
            
-           <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 flex-grow">
+           <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 grow">
                <div className="flex justify-between items-center mb-2">
                    <span className="text-gray-600 dark:text-gray-400">Phí đổi pin (Cơ bản):</span>
                    <span className="font-medium text-gray-900 dark:text-white">25,000 ₫</span>
