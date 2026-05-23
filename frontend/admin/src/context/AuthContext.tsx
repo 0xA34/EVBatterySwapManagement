@@ -1,7 +1,6 @@
 // src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// Định nghĩa kiểu dữ liệu cho User
 interface User {
   username: string;
   role: string;
@@ -27,7 +26,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAuthInitialized, setIsAuthInitialized] = useState<boolean>(false);
 
-  // Kiểm tra token trong localStorage khi ứng dụng khởi chạy
   useEffect(() => {
     const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
     const storedUser = localStorage.getItem(ADMIN_USER_KEY);
@@ -39,7 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(parsedUser);
         setIsAuthenticated(true);
       } catch {
-        // Dọn dữ liệu phiên hỏng để vẫn vào được trang đăng nhập
         localStorage.removeItem(ADMIN_TOKEN_KEY);
         localStorage.removeItem(ADMIN_USER_KEY);
         setToken(null);
@@ -74,7 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook để sử dụng AuthContext dễ dàng hơn
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -83,5 +79,4 @@ export function useAuth() {
   return context;
 }
 
-// Default export for compatibility with different import styles
 export default AuthContext;

@@ -24,7 +24,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check local storage on initial load
     const storedToken = localStorage.getItem(STAFF_TOKEN_KEY);
     const storedUser = localStorage.getItem(STAFF_USER_KEY);
 

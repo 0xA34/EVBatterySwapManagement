@@ -20,7 +20,6 @@ export default function AccountSettings() {
       ...passwordData,
       [e.target.name]: e.target.value
     });
-    // Clear error when typing
     if (error) setError("");
   };
 

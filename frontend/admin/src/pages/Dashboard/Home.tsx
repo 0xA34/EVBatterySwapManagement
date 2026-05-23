@@ -65,15 +65,12 @@ export default function Home() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   
-  // Header Buttons State
   const [dateRange, setDateRange] = useState("Hôm nay: " + new Date().toLocaleDateString('vi-VN'));
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleAction = (station: AttentionStation) => {
-    // Xóa trạm khỏi danh sách cần lưu ý (Giả lập đã xử lý)
     setAttentionStations(attentionStations.filter(s => s.id !== station.id));
     
-    // Hiện thông báo
     setToastMessage(`Đã xử lý tác vụ "${station.actionText}" cho ${station.name}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);

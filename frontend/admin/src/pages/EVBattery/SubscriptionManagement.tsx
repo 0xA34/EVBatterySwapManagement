@@ -40,7 +40,6 @@ export default function SubscriptionManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -74,14 +73,12 @@ export default function SubscriptionManagement() {
     const featuresArray = formData.features.split("\n").filter(f => f.trim() !== "");
     
     if (editingSub) {
-      // Update
       setSubscriptions(subscriptions.map(s => 
         s.id === editingSub.id 
           ? { ...editingSub, name: formData.name, price: formData.price, features: featuresArray, isPremium: formData.isPremium }
           : s
       ));
     } else {
-      // Create
       const newSub: Subscription = {
         id: Date.now().toString(),
         name: formData.name,

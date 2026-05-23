@@ -20,7 +20,6 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return null;
   }
 
-  // If the user isn't authenticated, redirect to /login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -34,6 +33,5 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     }
   }
 
-  // If authenticated, render the child routes (the Outlet)
   return <Outlet />;
 }
