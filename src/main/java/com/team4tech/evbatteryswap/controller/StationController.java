@@ -18,15 +18,8 @@ public class StationController {
 
     private final StationService stationService;
 
-//    @GetMapping("/page")
-//    public Page<Station> getStationPage(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
-//        Pageable pageable = PageRequest.of(page, size);
-//        return stationService.findAll(pageable);
-//    }
-
-
     @GetMapping("/page")
-    public Page<Station> getStationPageorStatus(
+    public Page<Station> getStationPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String status,

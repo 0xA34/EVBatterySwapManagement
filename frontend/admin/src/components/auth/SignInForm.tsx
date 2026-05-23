@@ -6,7 +6,6 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 
-
 export default function SignInForm() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -80,18 +79,10 @@ export default function SignInForm() {
 
       const data = await response.json();
       
-      // Kiểm tra chỉ cho phép ADMIN đăng nhập
-      if (data.role !== "ADMIN") {
-        setError("Chỉ có Admin mới được phép đăng nhập!");
-        setIsLoading(false);
-        return;
-      }
-      
-      // Lưu token vào localStorage
+      // Lưu token vào localStorage (thay 'accessToken' bằng key chính xác mà API của bạn trả về)
       if (data.accessToken || data.token) {
         localStorage.setItem("token", data.accessToken || data.token);
       }
-      localStorage.setItem("role", data.role);
 
       setSuccess("Đăng nhập thành công! Đang chuyển hướng...");
       setTimeout(() => {

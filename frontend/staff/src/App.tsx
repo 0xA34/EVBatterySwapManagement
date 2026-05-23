@@ -18,7 +18,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
 
           {/* Protected Dashboard Layout */}
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Navigate to="/inventory" replace />} />
               <Route path="/inventory" element={<BatteryInventory />} />

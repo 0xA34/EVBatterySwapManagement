@@ -1,0 +1,17 @@
+import { Navigate, Outlet } from "react-router";
+import { useAuth } from "../context/AuthContext";
+
+export default function AuthRoute() {
+  const { isAuthenticated, isAuthInitialized } = useAuth();
+
+  // Chờ khởi tạo auth xong trước khi quyết định route
+  if (!isAuthInitialized) {
+    return null;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+}

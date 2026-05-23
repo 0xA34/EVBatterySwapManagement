@@ -4,23 +4,25 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record UserRequest(
-        @NotBlank(message = "Username is required")
+public record UserRegisterRequest(
+
+        @NotBlank(message = "Username là bắt buộc.")
         @Size(max = 255)
         String username,
 
-        @NotBlank(message = "Full name is required")
+        @NotBlank(message = "Họ tên đầy đủ là bắt buộc.")
         @Size(max = 255)
         String fullName,
 
-        @Email(message = "Invalid email format")
+        @Email(message = "Sai cú pháp email.")
         @Size(max = 255)
         String email,
 
-        @Size(max = 20, message = "Phone number must be at most 20 characters")
+        @Size(max = 20, message = "Số điện thoại phải tối đa 11 số.")
         String phoneNumber,
 
-        // Nullable khi update (khong bat buoc doi mat khau), CHI bat buoc khi create.
+        // Bat buoc khi tao user moi
+        @NotBlank(message = "Mật khẩu là bắt buộc.")
         String password,
 
         String role,

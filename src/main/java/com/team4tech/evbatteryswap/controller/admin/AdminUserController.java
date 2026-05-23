@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.controller.admin;
 
-import com.team4tech.evbatteryswap.dto.request.UserRequest;
+import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
+import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.service.UserService;
@@ -39,15 +40,12 @@ public class AdminUserController {
             @RequestParam(required = false)    String search
     ) {
         Page<UserResponse> result = userService
-                .filterUsers(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .filterByKeyword(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
                 .map(UserResponse::from);
         return ResponseEntity.ok(result);
     }
 
-    @Operation(
-        summary = "Tìm người dùng theo ID",
-        description = "Trả về thông tin của một người dùng duy nhất dựa trên ID của họ. Trả về mã lỗi 404 nếu người dùng không tồn tại."
-    )
+    @Operation(summary = "Tìm user theo ID")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable int id) {
         return userService.findById(id)
@@ -56,12 +54,25 @@ public class AdminUserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Tìm kiếm user theo username", description = "Tìm kiếm không phân biệt hoa thường, có phân trang.")
+    @GetMapping("/search")
+    public ResponseEntity<Page<UserResponse>> searchUsers(
+            @RequestParam String username,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        Page<UserResponse> result = userService
+                .searchByUsername(username, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .map(UserResponse::from);
+        return ResponseEntity.ok(result);
+    }
+
     @Operation(
         summary = "Tạo một user mới",
         description = "Tạo tài khoản người dùng mới. Trả về mã 400 nếu tên người dùng hoặc email đã tồn tại."
     )
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRegisterRequest request) {
         try {
             User created = userService.createUser(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
@@ -77,7 +88,7 @@ public class AdminUserController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(
             @PathVariable int id,
-            @Valid @RequestBody UserRequest request
+            @Valid @RequestBody UserOnChangeRequest request
     ) {
         try {
             User updated = userService.updateUser(id, request);

@@ -1,22 +1,20 @@
 package com.team4tech.evbatteryswap.service;
 
-import com.team4tech.evbatteryswap.dto.request.UserRequest;
+import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
+import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,54 +45,28 @@ public class UserService implements IUserService {
         return userRepository.findByEmail(email);
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public Page<User> filterUsers(String searchKeyword, Pageable pageable) {
-        return userRepository.findAll(
-                (Specification<User>) (root, query, criteriaBuilder) -> {
-                    List<Predicate> predicates = new ArrayList<>();
+    public Page<User> filterByKeyword(@Param("keyword") String keyword, Pageable pageable) {
+        return userRepository.filterByKeyword(keyword, pageable);
+    }
 
-                    if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-                        String likePattern =
-                                "%" + searchKeyword.toLowerCase() + "%";
-                        predicates.add(
-                                criteriaBuilder.or(
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("username")),
-                                                likePattern
-                                        ),
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("fullName")),
-                                                likePattern
-                                        ),
-                                        criteriaBuilder.like(
-                                                criteriaBuilder.lower(root.get("email")),
-                                                likePattern
-                                        )
-                                )
-                        );
-                    }
-
-                    return criteriaBuilder.and(
-                            predicates.toArray(new Predicate[0])
-                    );
-                },
-                pageable
-        );
+    @Override
+    @Transactional(readOnly = true)
+    public Page<User> searchByUsername(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
     }
 
     @Override
     @Transactional
-    public User createUser(UserRequest request) {
+    public User createUser(UserRegisterRequest request) {
         if (userRepository.findByUsername(request.username()).isPresent()) {
             throw new IllegalArgumentException("Username '" + request.username() + "' already exists");
         }
         if (request.email() != null && !request.email().isBlank()
                 && userRepository.findByEmail(request.email()).isPresent()) {
             throw new IllegalArgumentException("Email '" + request.email() + "' already in use");
-        }
-        if (request.password() == null || request.password().isBlank()) {
-            throw new IllegalArgumentException("Password is required when creating a user");
         }
 
         User user = new User();
@@ -113,16 +85,9 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public User updateUser(int id, UserRequest request) {
+    public User updateUser(int id, UserOnChangeRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-
-        // kiem tra username co trung khong?
-        userRepository.findByUsername(request.username())
-                .filter(existing -> !existing.getId().equals(id))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Username '" + request.username() + "' already exists");
-                });
 
         // kiem tra email co trung khong?
         if (request.email() != null && !request.email().isBlank()) {
@@ -133,7 +98,6 @@ public class UserService implements IUserService {
                     });
         }
 
-        user.setUsername(request.username());
         user.setFullName(request.fullName());
         user.setEmail(request.email());
         user.setPhoneNumber(request.phoneNumber());
@@ -158,5 +122,20 @@ public class UserService implements IUserService {
         }
         userRepository.deleteById(id);
     }
+
+
+    @Override
+    public boolean updateEmail(@Param("id") int id, @Param("newEmail") String newEmail) {
+        int rowsAffected = userRepository.updateEmail(id, newEmail);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public boolean updatePhone(@Param("id") int id, @Param("newPhone") String newPhone) {
+        int rowsAffected =  userRepository.updatePhone(id, newPhone);
+        return rowsAffected > 0;
+    }
+
+
 }
 
