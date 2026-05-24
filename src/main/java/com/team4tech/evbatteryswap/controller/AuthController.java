@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.controller;
 
 import com.team4tech.evbatteryswap.dto.request.LoginRequest;
 import com.team4tech.evbatteryswap.dto.response.LoginResponse;
+import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
 import com.team4tech.evbatteryswap.security.TokenBlacklistService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
 
 
     @PostMapping("/login")
@@ -68,19 +71,11 @@ public class AuthController {
 
     // lay jwt tu authorisation header xong r oi them vao blacklist.
     private ResponseEntity<Map<String, String>> performLogout(HttpServletRequest request) {
-        String token = extractToken(request);
+        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
         if (StringUtils.hasText(token)) {
             long expiryMs = jwtTokenProvider.getExpirationFromToken(token).getTime();
             tokenBlacklistService.blacklist(token, expiryMs);
         }
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
-    }
-
-    private String extractToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-        return null;
     }
 }
