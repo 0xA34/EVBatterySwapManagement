@@ -17,27 +17,27 @@ const initialAttentionStations: AttentionStation[] = [
     id: "s1",
     name: "Trạm Q2 - Thảo Điền",
     batteryText: "2/50",
-    batteryColor: "text-error dark:text-red-400",
+    batteryColor: "text-red-600 font-bold dark:text-red-400",
     issue: "Thiếu pin nghiêm trọng",
-    issueColor: "bg-error/10 text-error dark:bg-red-500/20 dark:text-red-400",
+    issueColor: "bg-red-100 text-red-600 font-semibold dark:bg-red-500/20 dark:text-red-400",
     actionText: "Điều phối ngay"
   },
   {
     id: "s2",
     name: "Trạm Q7 - Lotte Mart",
     batteryText: "5/40",
-    batteryColor: "text-warning dark:text-yellow-400",
+    batteryColor: "text-yellow-600 font-semibold dark:text-yellow-400",
     issue: "Sắp cạn pin",
-    issueColor: "bg-warning/10 text-warning dark:bg-yellow-500/20 dark:text-yellow-400",
+    issueColor: "bg-yellow-100 text-yellow-600 font-semibold dark:bg-yellow-500/20 dark:text-yellow-400",
     actionText: "Xem chi tiết"
   },
   {
     id: "s3",
     name: "Trạm Q1 - Bitexco",
     batteryText: "48/50",
-    batteryColor: "text-gray-500 dark:text-gray-300",
+    batteryColor: "text-yellow-600 font-semibold dark:text-yellow-400",
     issue: "Pin cạn quá tải (48 pin trống)",
-    issueColor: "bg-warning/10 text-warning dark:bg-yellow-500/20 dark:text-yellow-400",
+    issueColor: "bg-yellow-100 text-yellow-600 font-semibold dark:bg-yellow-500/20 dark:text-yellow-400",
     actionText: "Điều phối đi"
   }
 ];
@@ -163,7 +163,7 @@ export default function Home() {
                   24
                 </h4>
               </div>
-              <span className="flex items-center gap-1 text-sm font-medium text-success dark:text-green-400">
+              <span className="flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400">
                 Hoạt động: 23
               </span>
             </div>
@@ -176,7 +176,7 @@ export default function Home() {
                   4,520
                 </h4>
               </div>
-              <span className="flex items-center gap-1 text-sm font-medium text-success dark:text-green-400">
+              <span className="flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400">
                 +12% tuần này
               </span>
             </div>
@@ -191,11 +191,11 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-error/20 bg-error/5 p-5 dark:border-error/20 dark:bg-red-500/10 md:p-6 shadow-sm">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-error/20 dark:bg-red-500/10 md:p-6 shadow-sm">
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-sm font-medium text-error dark:text-red-400">Cảnh Báo (Thiếu Pin)</span>
-                <h4 className="mt-2 text-title-sm font-bold text-error dark:text-red-400">
+                <span className="text-sm font-medium text-red-600 dark:text-red-400">Cảnh Báo (Thiếu Pin)</span>
+                <h4 className="mt-2 text-title-sm font-bold text-red-600 dark:text-red-400">
                   {attentionStations.length} Trạm
                 </h4>
               </div>
@@ -266,9 +266,9 @@ export default function Home() {
                 {activities.slice(0, showAllActivities ? activities.length : 3).map((activity) => (
                   <div key={activity.id} className="flex gap-4">
                     <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                      activity.type === 'swap' ? 'bg-brand-500/10 text-brand-500 dark:bg-brand-500/20 dark:text-brand-400' :
-                      activity.type === 'warning' ? 'bg-warning/10 text-warning dark:bg-yellow-500/20 dark:text-yellow-400' :
-                      'bg-success/10 text-success dark:bg-green-500/20 dark:text-green-400'
+                      activity.type === 'swap' ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400' :
+                      activity.type === 'warning' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400' :
+                      'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400'
                     }`}>
                       {activity.type === 'swap' && (
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
