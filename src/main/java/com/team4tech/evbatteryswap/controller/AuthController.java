@@ -3,27 +3,35 @@ package com.team4tech.evbatteryswap.controller;
 import com.team4tech.evbatteryswap.dto.request.LoginRequest;
 import com.team4tech.evbatteryswap.dto.response.LoginResponse;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
+import com.team4tech.evbatteryswap.security.TokenBlacklistService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:5173")
-@Tag(name = "Authentication", description = "Login to obtain a JWT token")
+@Tag(name = "Authentication", description = "Login / Logout endpoints")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
+
 
     @PostMapping("/login")
     @Operation(
@@ -45,5 +53,34 @@ public class AuthController {
                 .orElse("UNKNOWN");
 
         return ResponseEntity.ok(new LoginResponse(token, role));
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Logout",
+            description = "Invalidates the current JWT token. Works for **all roles** (Admin, Staff, Driver).",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
+        return performLogout(request);
+    }
+
+    // lay jwt tu authorisation header xong r oi them vao blacklist.
+    private ResponseEntity<Map<String, String>> performLogout(HttpServletRequest request) {
+        String token = extractToken(request);
+        if (StringUtils.hasText(token)) {
+            long expiryMs = jwtTokenProvider.getExpirationFromToken(token).getTime();
+            tokenBlacklistService.blacklist(token, expiryMs);
+        }
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
+        return null;
     }
 }
