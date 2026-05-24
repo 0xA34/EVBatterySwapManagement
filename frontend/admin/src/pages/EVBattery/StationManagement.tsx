@@ -49,6 +49,7 @@ export default function StationManagement() {
   const [searchStatus, setSearchStatus] = useState<string>("");
   const [currentSearchStatus, setCurrentSearchStatus] = useState<string>("");
   const [searchDistricts, setSearchDistricts] = useState<District[]>([]);
+  const [statusCounts, setStatusCounts] = useState<{status: string, count: number}[]>([]);
   const [searchWards, setSearchWards] = useState<Ward[]>([]);
 
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -105,17 +106,27 @@ export default function StationManagement() {
           
         const response = await fetch(url, {
           headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Authorization": `Bearer ${token}`
           }
         });
         if (!response.ok) {
-          throw new Error("Không thể tải danh sách trạm");
+          throw new Error("Lỗi khi tải danh sách trạm");
         }
         const data = await response.json();
-        setStations(data.content || []);
-        setTotalPages(data.totalPages || 1);
-        setCurrentPage(data.number || 0);
+        setStations(data.content);
+        setTotalPages(data.totalPages);
+      }
+
+      try {
+        const countRes = await fetch(`/api/admin/stations/statusCount`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (countRes.ok) {
+          const countData = await countRes.json();
+          setStatusCounts(countData);
+        }
+      } catch (e) {
+        console.error("Lỗi khi tải thống kê trạng thái:", e);
       }
     } catch (err: any) {
       setError(err.message);
@@ -388,9 +399,27 @@ export default function StationManagement() {
             </button>
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800/50 dark:border-gray-800">
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 w-fit ml-auto">
-              <div className="flex flex-wrap gap-3 items-center justify-start">
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800/50 dark:border-gray-800 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <div className="grid grid-cols-2 gap-2 w-full xl:w-auto">
+              {['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'DEPLOYING'].map(st => {
+                const count = statusCounts.find(c => c.status === st)?.count || 0;
+                let label = "";
+                let colorClass = "";
+                if (st === 'ACTIVE') { label = "Hoạt động"; colorClass = "bg-green-100 text-green-700 dark:bg-green-500/30 dark:text-green-400"; }
+                if (st === 'INACTIVE') { label = "Ngừng hoạt động"; colorClass = "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/30 dark:text-yellow-400"; }
+                if (st === 'MAINTENANCE') { label = "Bảo trì"; colorClass = "bg-red-100 text-red-700 dark:bg-red-500/30 dark:text-red-400"; }
+                if (st === 'DEPLOYING') { label = "Đang triển khai"; colorClass = "bg-blue-100 text-blue-700 dark:bg-blue-500/30 dark:text-blue-400"; }
+                
+                return (
+                  <div key={st} className={`px-5 py-2 rounded-lg text-sm font-medium flex justify-between gap-25 items-center ${colorClass}`}>
+                    <span>{label}</span>
+                    <span className="font-bold text-base">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <form onSubmit={handleSearch} className="flex flex-col gap-3 w-full xl:w-fit ml-auto">
+              <div className="flex flex-wrap gap-3 items-center xl:justify-end justify-start">
                 <input
                   type="number"
                   placeholder="ID trạm..."
@@ -463,6 +492,30 @@ export default function StationManagement() {
                     <option key={w.id} value={w.id}>{w.tenphuongxa}</option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchIdInput("");
+                    setSearchInput("");
+                    setSearchStatus("");
+                    setSearchProvince(0);
+                    setSearchDistrict(0);
+                    setSearchWard(0);
+                    setCurrentSearchId("");
+                    setCurrentKeyword("");
+                    setCurrentSearchStatus("");
+                    setCurrentSearchProvince(0);
+                    setCurrentSearchDistrict(0);
+                    setCurrentSearchWard(0);
+                    setCurrentPage(0);
+                  }}
+                  className="px-4 py-2 flex items-center justify-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  title="Làm mới"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                </button>
               </div>
             </form>
           </div>
