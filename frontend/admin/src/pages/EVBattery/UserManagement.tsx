@@ -295,7 +295,7 @@ export default function UserManagement() {
                       </button>
                       <button 
                         onClick={() => handleDelete(user.id)}
-                        className="text-error hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
                       >
                         Xóa
                       </button>
