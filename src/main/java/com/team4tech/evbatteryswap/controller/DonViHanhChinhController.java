@@ -18,6 +18,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/donvihanhchinh")
+@CrossOrigin(origins = "http://localhost:5173")
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class DonViHanhChinhController {
 
