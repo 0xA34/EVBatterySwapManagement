@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -122,4 +123,17 @@ public class AdminStationController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, String>> getStatus() {
+        Map<String, String> statusMap = new LinkedHashMap<>();
+
+        statusMap.put("ACTIVE", "Đang Hoạt Động");
+        statusMap.put("MAINTENANCE", "Đang Bảo Trì");
+        statusMap.put("DEPLOYING", "Đang Triển Khai");
+        statusMap.put("INACTIVE", "Ngưng Hoạt Động");
+
+        return ResponseEntity.ok(statusMap);
+    }
+
 }
