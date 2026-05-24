@@ -1,11 +1,13 @@
 package com.team4tech.evbatteryswap.service.interfaces;
 
 import com.team4tech.evbatteryswap.dto.request.StationRequest;
+import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Station;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IStationService {
@@ -29,4 +31,6 @@ public interface IStationService {
     Station updateStation(int id, StationRequest request);
 
     void deleteStation(int id);
+
+    List<StationStatusCountResponse> countStationsByStatus();
 }

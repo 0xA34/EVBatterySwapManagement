@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.controller.admin;
 
 import com.team4tech.evbatteryswap.dto.request.StationRequest;
 import com.team4tech.evbatteryswap.dto.response.StationResponse;
+import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.service.StationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -135,5 +137,13 @@ public class AdminStationController {
 
         return ResponseEntity.ok(statusMap);
     }
+
+    @GetMapping("/statusCount")
+    public List<StationStatusCountResponse> countStationsByStatus() {
+        return stationService.countStationsByStatus();
+    }
+
+
+
 
 }
