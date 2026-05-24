@@ -21,6 +21,10 @@ type Station = {
   updatedAt?: string;
 };
 
+type Province = { id: number; tinhthanhcol: string; bienso: string };
+type District = { id: number; tenquanhuyen: string };
+type Ward = { id: number; tenphuongxa: string };
+
 export default function StationManagement() {
   const { token } = useAuth();
   const [stations, setStations] = useState<Station[]>([]);
@@ -36,6 +40,21 @@ export default function StationManagement() {
   const [searchIdInput, setSearchIdInput] = useState("");
   const [currentSearchId, setCurrentSearchId] = useState("");
 
+  const [searchProvince, setSearchProvince] = useState<number>(0);
+  const [searchDistrict, setSearchDistrict] = useState<number>(0);
+  const [searchWard, setSearchWard] = useState<number>(0);
+  const [currentSearchProvince, setCurrentSearchProvince] = useState<number>(0);
+  const [currentSearchDistrict, setCurrentSearchDistrict] = useState<number>(0);
+  const [currentSearchWard, setCurrentSearchWard] = useState<number>(0);
+  const [searchStatus, setSearchStatus] = useState<string>("");
+  const [currentSearchStatus, setCurrentSearchStatus] = useState<string>("");
+  const [searchDistricts, setSearchDistricts] = useState<District[]>([]);
+  const [searchWards, setSearchWards] = useState<Ward[]>([]);
+
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -45,7 +64,15 @@ export default function StationManagement() {
     status: "ACTIVE" as StationStatus
   });
 
-  const fetchStations = async (page: number = 0, keyword: string = "", searchId: string = "") => {
+  const fetchStations = async (
+    page: number = 0, 
+    keyword: string = "", 
+    searchId: string = "",
+    province: number = 0,
+    district: number = 0,
+    ward: number = 0,
+    status: string = ""
+  ) => {
     setIsLoading(true);
     setError("");
     try {
@@ -66,9 +93,15 @@ export default function StationManagement() {
         setTotalPages(1);
         setCurrentPage(0);
       } else {
-        const url = keyword.trim() 
-          ? `/api/admin/stations/search?keyword=${encodeURIComponent(keyword.trim())}&page=${page}&size=15`
-          : `/api/admin/stations?page=${page}&size=15`;
+        let url = `/api/admin/stations?page=${page}&size=15`;
+        if (keyword.trim()) {
+          url = `/api/admin/stations/search?keyword=${encodeURIComponent(keyword.trim())}&page=${page}&size=15`;
+        } else {
+          if (province > 0) url += `&province=${province}`;
+          if (district > 0) url += `&quan=${district}`;
+          if (ward > 0) url += `&phuongxa=${ward}`;
+        }
+        if (status) url += `&status=${status}`;
           
         const response = await fetch(url, {
           headers: {
@@ -95,20 +128,117 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (token) {
-      fetchStations(currentPage, currentKeyword, currentSearchId);
+      fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
     }
-  }, [token, currentPage, currentKeyword, currentSearchId]);
+  }, [token, currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus]);
+
+  useEffect(() => {
+    if (searchProvince && token) {
+      fetch(`/api/donvihanhchinh/quanHuyen?idTinhThanh=${searchProvince}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data?.content || data?.data || []);
+          setSearchDistricts(arr);
+        })
+        .catch(err => console.error(err));
+    } else {
+      setSearchDistricts([]);
+    }
+  }, [searchProvince, token]);
+
+  useEffect(() => {
+    if (searchDistrict && token) {
+      fetch(`/api/donvihanhchinh/phuongXa?idQuanHuyen=${searchDistrict}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data?.content || data?.data || []);
+          setSearchWards(arr);
+        })
+        .catch(err => console.error(err));
+    } else {
+      setSearchWards([]);
+    }
+  }, [searchDistrict, token]);
+
+  useEffect(() => {
+    if (token) {
+      fetch('/api/donvihanhchinh/tinhThanh', {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data?.content || data?.data || []);
+          setProvinces(arr);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (formData.province && token) {
+      fetch(`/api/donvihanhchinh/quanHuyen?idTinhThanh=${formData.province}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data?.content || data?.data || []);
+          setDistricts(arr);
+        })
+        .catch(err => console.error(err));
+    } else {
+      setDistricts([]);
+    }
+  }, [formData.province, token]);
+
+  useEffect(() => {
+    if (formData.quan && token) {
+      fetch(`/api/donvihanhchinh/phuongXa?idQuanHuyen=${formData.quan}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const arr = Array.isArray(data) ? data : (data?.content || data?.data || []);
+          setWards(arr);
+        })
+        .catch(err => console.error(err));
+    } else {
+      setWards([]);
+    }
+  }, [formData.quan, token]);
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({
+      ...formData, 
+      province: Number(e.target.value),
+      quan: 0,
+      phuongxa: 0
+    });
+  };
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({
+      ...formData, 
+      quan: Number(e.target.value),
+      phuongxa: 0
+    });
+  };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return "bg-success/10 text-success dark:bg-green-500/20 dark:text-green-400";
+        return "bg-green-200 text-green-700 font-semibold dark:bg-green-500/30 dark:text-green-400";
       case "INACTIVE":
-        return "bg-warning/10 text-warning dark:bg-yellow-500/20 dark:text-yellow-400";
+        return "bg-yellow-200 text-yellow-700 font-semibold dark:bg-yellow-500/30 dark:text-yellow-400";
       case "MAINTENANCE":
-        return "bg-error/10 text-error dark:bg-red-500/20 dark:text-red-400";
+        return "bg-red-200 text-red-700 font-semibold dark:bg-red-500/30 dark:text-red-400";
+      case "DEPLOYING":
+        return "bg-blue-200 text-blue-700 font-semibold dark:bg-blue-500/30 dark:text-blue-400";
       default:
-        return "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400";
+        return "bg-gray-200 text-gray-700 font-semibold dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
@@ -117,6 +247,7 @@ export default function StationManagement() {
       case "ACTIVE": return "Hoạt động";
       case "INACTIVE": return "Ngừng hoạt động";
       case "MAINTENANCE": return "Bảo trì";
+      case "DEPLOYING": return "Đang triển khai";
       default: return status;
     }
   };
@@ -196,7 +327,7 @@ export default function StationManagement() {
       }
       
       handleCloseModal();
-      fetchStations(currentPage, currentKeyword, currentSearchId);
+      fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
     } catch (err: any) {
       alert(err.message);
     }
@@ -217,7 +348,7 @@ export default function StationManagement() {
           throw new Error("Lỗi khi xóa trạm");
         }
         
-        fetchStations(currentPage, currentKeyword, currentSearchId);
+        fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
       } catch (err: any) {
         alert(err.message);
       }
@@ -228,6 +359,10 @@ export default function StationManagement() {
     e.preventDefault();
     setCurrentSearchId(searchIdInput);
     setCurrentKeyword(searchInput);
+    setCurrentSearchProvince(searchProvince);
+    setCurrentSearchDistrict(searchDistrict);
+    setCurrentSearchWard(searchWard);
+    setCurrentSearchStatus(searchStatus);
     setCurrentPage(0); 
   };
 
@@ -240,39 +375,96 @@ export default function StationManagement() {
       <PageBreadcrumb pageTitle="Quản Lý Trạm Đổi Pin" />
 
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            Danh sách các trạm {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <input
-                type="number"
-                placeholder="ID trạm..."
-                value={searchIdInput}
-                onChange={(e) => setSearchIdInput(e.target.value)}
-                className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="Từ khóa..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-              <button
-                type="submit"
-                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-              >
-                Tìm
-              </button>
-            </form>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Danh sách các trạm {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
+            </h2>
             <button 
               onClick={() => handleOpenModal()}
               className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium whitespace-nowrap"
             >
               + Thêm trạm mới
             </button>
+          </div>
+          
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800/50 dark:border-gray-800">
+            <form onSubmit={handleSearch} className="flex flex-col gap-3 w-fit ml-auto">
+              <div className="flex flex-wrap gap-3 items-center justify-start">
+                <input
+                  type="number"
+                  placeholder="ID trạm..."
+                  value={searchIdInput}
+                  onChange={(e) => setSearchIdInput(e.target.value)}
+                  className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+                <input
+                  type="text"
+                  placeholder="Từ khóa..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+                <select
+                  value={searchStatus}
+                  onChange={(e) => setSearchStatus(e.target.value)}
+                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value="">Trạng thái</option>
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="INACTIVE">Ngừng hoạt động</option>
+                  <option value="MAINTENANCE">Bảo trì</option>
+                  <option value="DEPLOYING">Đang triển khai</option>
+                </select>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium"
+                >
+                  Lọc
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-3 items-center justify-start">
+                <select
+                  value={searchProvince || ""}
+                  onChange={(e) => {
+                    setSearchProvince(Number(e.target.value));
+                    setSearchDistrict(0);
+                    setSearchWard(0);
+                  }}
+                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value="">Tỉnh/Thành</option>
+                  {Array.isArray(provinces) && provinces.map(p => (
+                    <option key={p.id} value={p.id}>{p.tinhthanhcol}</option>
+                  ))}
+                </select>
+                <select
+                  value={searchDistrict || ""}
+                  onChange={(e) => {
+                    setSearchDistrict(Number(e.target.value));
+                    setSearchWard(0);
+                  }}
+                  disabled={!searchProvince}
+                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">Quận/Huyện</option>
+                  {Array.isArray(searchDistricts) && searchDistricts.map(d => (
+                    <option key={d.id} value={d.id}>{d.tenquanhuyen}</option>
+                  ))}
+                </select>
+                <select
+                  value={searchWard || ""}
+                  onChange={(e) => setSearchWard(Number(e.target.value))}
+                  disabled={!searchDistrict}
+                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">Phường/Xã</option>
+                  {Array.isArray(searchWards) && searchWards.map(w => (
+                    <option key={w.id} value={w.id}>{w.tenphuongxa}</option>
+                  ))}
+                </select>
+              </div>
+            </form>
           </div>
         </div>
         
@@ -312,7 +504,7 @@ export default function StationManagement() {
                   <tr key={station.id}>
                     <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">#{station.id}</td>
                     <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{station.name}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate" title={station.address}>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words min-w-[250px]" title={station.address}>
                       {station.address}
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -332,7 +524,7 @@ export default function StationManagement() {
                       </button>
                       <button 
                         onClick={() => handleDelete(station.id)}
-                        className="text-error hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
                       >
                         Xóa
                       </button>
@@ -414,42 +606,56 @@ export default function StationManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ID Tỉnh/Thành
+                    Tỉnh/Thành
                   </label>
-                  <input 
-                    type="number" 
+                  <select 
                     required
-                    value={formData.province}
-                    onChange={(e) => setFormData({...formData, province: Number(e.target.value)})}
+                    value={formData.province || ""}
+                    onChange={handleProvinceChange}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
+                  >
+                    <option value="">Chọn Tỉnh/Thành</option>
+                    {Array.isArray(provinces) && provinces.map(p => (
+                      <option key={p.id} value={p.id}>{p.tinhthanhcol}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ID Quận/Huyện
+                    Quận/Huyện
                   </label>
-                  <input 
-                    type="number" 
+                  <select 
                     required
-                    value={formData.quan}
-                    onChange={(e) => setFormData({...formData, quan: Number(e.target.value)})}
+                    value={formData.quan || ""}
+                    onChange={handleDistrictChange}
+                    disabled={!formData.province}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
+                  >
+                    <option value="">Chọn Quận/Huyện</option>
+                    {Array.isArray(districts) && districts.map(d => (
+                      <option key={d.id} value={d.id}>{d.tenquanhuyen}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ID Phường/Xã
+                    Phường/Xã
                   </label>
-                  <input 
-                    type="number" 
+                  <select 
                     required
-                    value={formData.phuongxa}
+                    value={formData.phuongxa || ""}
                     onChange={(e) => setFormData({...formData, phuongxa: Number(e.target.value)})}
+                    disabled={!formData.quan}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
+                  >
+                    <option value="">Chọn Phường/Xã</option>
+                    {Array.isArray(wards) && wards.map(w => (
+                      <option key={w.id} value={w.id}>{w.tenphuongxa}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -465,6 +671,7 @@ export default function StationManagement() {
                   <option value="ACTIVE">Hoạt động</option>
                   <option value="INACTIVE">Ngừng hoạt động</option>
                   <option value="MAINTENANCE">Bảo trì</option>
+                  <option value="DEPLOYING">Đang triển khai</option>
                 </select>
               </div>
 
