@@ -24,6 +24,5 @@ public interface IUserService {
 
     boolean updateEmail(@Param("id") int id, @Param("newEmail") String newEmail);
     boolean updatePhone(@Param("id") int id, @Param("newPhone") String newPhone);
-    boolean updatePasswordById(@Param("id") int id, @Param("password") String newPassword);
-    Optional<String> findPasswordById(@Param("id") int id);
+
 }

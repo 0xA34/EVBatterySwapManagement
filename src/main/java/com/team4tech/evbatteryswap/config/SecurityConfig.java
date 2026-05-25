@@ -71,8 +71,11 @@ public class SecurityConfig {
                             "/v3/api-docs/**"
                     ).permitAll()
 
+                    // Admin endpoints require ADMIN role
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                     // Everything else requires authentication
-                    .anyRequest().permitAll()
+                    .anyRequest().authenticated()
             )
 
             // Register the authentication provider

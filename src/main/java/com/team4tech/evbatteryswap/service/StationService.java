@@ -1,7 +1,6 @@
 package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.StationRequest;
-import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Phuongxa;
 import com.team4tech.evbatteryswap.entity.Quanhuyen;
 import com.team4tech.evbatteryswap.entity.Station;
@@ -17,8 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -133,30 +131,4 @@ public class StationService implements IStationService {
         }
         stationRepository.deleteById(id);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<StationStatusCountResponse> countStationsByStatus() {
-        // 1. Lấy dữ liệu thực tế từ database (ví dụ chỉ có MAINTENANCE, ACTIVE, INACTIVE)
-        List<StationStatusCountResponse> dbResults = stationRepository.countStationsByStatus();
-
-        // Chuyển danh sách từ DB thành Map để dễ tra cứu: Key là Status, Value là Count
-        Map<String, Long> dbResultMap = dbResults.stream()
-                .collect(Collectors.toMap(StationStatusCountResponse::getStatus, StationStatusCountResponse::getCount));
-
-        // 2. Định nghĩa danh sách 4 trạng thái bắt buộc phải có
-        List<String> allStatuses = Arrays.asList("ACTIVE", "MAINTENANCE", "DEPLOYING", "INACTIVE");
-
-        // 3. Tạo danh sách kết quả cuối cùng
-        List<StationStatusCountResponse> finalResults = new ArrayList<>();
-
-        for (String status : allStatuses) {
-            // Nếu DB có trạng thái này thì lấy số lượng từ DB, ngược lại thì gán bằng 0
-            long count = dbResultMap.getOrDefault(status, 0L);
-            finalResults.add(new StationStatusCountResponse(status, count));
-        }
-
-        return finalResults;
-    }
-
 }
