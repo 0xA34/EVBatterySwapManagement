@@ -127,7 +127,7 @@ public class AdminStationController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<Map<String, String>> getStatus() {
+    public ResponseEntity<Map<String, String>> getListStatus() {
         Map<String, String> statusMap = new LinkedHashMap<>();
 
         statusMap.put("ACTIVE", "Đang Hoạt Động");

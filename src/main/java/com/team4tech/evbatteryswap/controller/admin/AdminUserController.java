@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -46,6 +47,18 @@ public class AdminUserController {
     }
 
     @Operation(summary = "Tìm user theo ID")
+
+    @GetMapping("/role")
+    public ResponseEntity<Map<String, String>> getListRole() {
+        Map<String, String> roleMap = new LinkedHashMap<>();
+
+        roleMap.put("ADMIN", "Quản Trị Viên");
+        roleMap.put("STAFF", "Nhân Viên Trạm");
+        roleMap.put("DRIVER", "Khách Hàng");
+
+        return ResponseEntity.ok(roleMap);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable int id) {
         return userService.findById(id)
