@@ -4,11 +4,9 @@ package com.team4tech.evbatteryswap.controller.driver;
 import com.team4tech.evbatteryswap.dto.request.SupportTicketRequest;
 import com.team4tech.evbatteryswap.dto.response.SupportTicketResponse;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
-import com.team4tech.evbatteryswap.entity.StationReview;
 import com.team4tech.evbatteryswap.entity.SupportTicket;
 import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
-import com.team4tech.evbatteryswap.service.StationReviewService;
 import com.team4tech.evbatteryswap.service.SupportTicketService;
 import com.team4tech.evbatteryswap.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,11 +36,9 @@ public class UserController {
 
     UserService userService;
     SupportTicketService supportTicketService;
-    StationReviewService stationReviewService;
     JwtAuthenticationFilter jwtAuthenticationFilter;
     JwtTokenProvider jwtTokenProvider;
     PasswordEncoder passwordEncoder;
-
 
 
     public boolean checkPassword(int id, String oldPassword) {
@@ -153,20 +149,6 @@ public class UserController {
         Integer id = userService.findByUsername(username).get().getId();
         Pageable pageable = PageRequest.of(page, size);
         return supportTicketService.findByUserId(id, pageable);
-    }
-
-
-    @GetMapping("/page/StationReview")
-    public Page<StationReview> getStationReviewPage(
-            HttpServletRequest request,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
-    ) {
-        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
-        Integer id = userService.findByUsername(username).get().getId();
-        Pageable pageable = PageRequest.of(page, size);
-        return stationReviewService.findByUserId(id, pageable);
     }
 
 

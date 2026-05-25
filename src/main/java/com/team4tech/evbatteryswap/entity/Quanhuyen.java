@@ -21,4 +21,8 @@ public class Quanhuyen {
     @Column(name = "tenquanhuyen", nullable = false, length = 100)
     private String tenquanhuyen;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idtinhthanh", nullable = false) // Tên cột chứa ID tỉnh thành nằm trong bảng quanhuyen ở DB
+    private Tinhthanh tinhthanh;
+
 }

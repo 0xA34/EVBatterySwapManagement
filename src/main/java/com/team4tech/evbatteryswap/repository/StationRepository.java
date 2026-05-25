@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.repository;
 
 
+import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Station;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,6 +38,9 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
             Pageable pageable
     );
 
-//    Optional<Station> findByName(String name);
-//    Page<Station> findByStatus(String status, Pageable pageable);
+    @Query("SELECT new com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse(s.status, COUNT(s)) " +
+            "FROM Station s GROUP BY s.status")
+    List<StationStatusCountResponse> countStationsByStatus();
+
+
 }

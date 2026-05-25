@@ -27,6 +27,6 @@ public class Phuongxa {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "idquanhuyen", nullable = false)
-    private Quanhuyen idquanhuyen;
+    private Quanhuyen quanhuyen;
 
 }
