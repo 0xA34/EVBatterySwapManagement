@@ -1,8 +1,50 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
+import Chart from "react-apexcharts";
+import { ApexOptions } from "apexcharts";
 
 export default function ReportsDashboard() {
+  const chartOptions: ApexOptions = {
+    chart: {
+      type: "area",
+      fontFamily: "inherit",
+      toolbar: { show: false },
+    },
+    colors: ["#3b82f6", "#10b981"],
+    dataLabels: { enabled: false },
+    stroke: { curve: "smooth", width: 2 },
+    xaxis: {
+      categories: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      title: { text: "Lượt đổi pin" },
+    },
+    legend: { position: "top", horizontalAlign: "right" },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.05,
+        stops: [0, 90, 100]
+      }
+    },
+  };
+
+  const chartSeries = [
+    {
+      name: "Tuần này",
+      data: [120, 180, 150, 210, 240, 310, 280],
+    },
+    {
+      name: "Tuần trước",
+      data: [100, 150, 140, 190, 220, 270, 250],
+    },
+  ];
+
   return (
     <>
       <PageMeta
@@ -22,7 +64,7 @@ export default function ReportsDashboard() {
                   125.4M đ
                 </h4>
               </div>
-              <span className="flex items-center gap-1 text-sm font-medium text-success dark:text-green-400">
+              <span className="flex items-center gap-1 text-sm font-medium text-green-500 dark:text-green-400">
                 +4.5%
               </span>
             </div>
@@ -35,7 +77,7 @@ export default function ReportsDashboard() {
                   1,425
                 </h4>
               </div>
-              <span className="flex items-center gap-1 text-sm font-medium text-success dark:text-green-400">
+              <span className="flex items-center gap-1 text-sm font-medium text-green-500 dark:text-green-400">
                 +12.1%
               </span>
             </div>
@@ -54,7 +96,7 @@ export default function ReportsDashboard() {
             <div className="flex items-end justify-between">
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Dự báo nhu cầu tuần tới (AI)</span>
-                <h4 className="mt-2 text-title-sm font-bold text-warning dark:text-yellow-400">
+                <h4 className="mt-2 text-title-sm font-bold text-orange-500 dark:text-orange-400">
                   Tăng 15%
                 </h4>
               </div>
@@ -63,9 +105,14 @@ export default function ReportsDashboard() {
         </div>
 
         <ComponentCard title="Tần Suất Đổi Pin & Doanh Thu">
-          {/* We use BarChartOne if available, otherwise just a placeholder */}
-          <div className="h-80 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-gray-500">Biểu đồ đang được cập nhật...</span>
+          <div className="h-[320px] w-full">
+            <Chart
+              options={chartOptions}
+              series={chartSeries}
+              type="area"
+              height="100%"
+              width="100%"
+            />
           </div>
         </ComponentCard>
       </div>

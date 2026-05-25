@@ -13,7 +13,6 @@ export default function SignUpForm() {
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
-  // Form states
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
   const [email, setEmail] = useState("");
@@ -21,7 +20,6 @@ export default function SignUpForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Live password validation criteria
   const isLengthValid = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
@@ -53,7 +51,6 @@ export default function SignUpForm() {
       return;
     }
 
-    // Simulated registration success
     setSuccess("Đăng ký tài khoản thành công! Đang chuyển hướng sang Đăng Nhập...");
     setTimeout(() => {
       navigate("/signin");

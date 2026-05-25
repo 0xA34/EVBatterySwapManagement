@@ -1,34 +1,82 @@
-  }
+// src/context/AuthContext.tsx
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+interface User {
+  username: string;
+  role: string;
+}
+
+const ADMIN_TOKEN_KEY = "admin_auth_token";
+const ADMIN_USER_KEY = "admin_auth_user";
 
 interface AuthContextType {
+  user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
+  isAuthInitialized: boolean;
+  login: (token: string, user: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthInitialized, setIsAuthInitialized] = useState<boolean>(false);
 
   useEffect(() => {
-      setIsAuthenticated(true);
+    const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+    const storedUser = localStorage.getItem(ADMIN_USER_KEY);
+
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser) as User;
+        setToken(storedToken);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch {
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        localStorage.removeItem(ADMIN_USER_KEY);
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     }
+
+    setIsAuthInitialized(true);
   }, []);
 
-      setIsAuthenticated(true);
+  const login = (newToken: string, userData: User) => {
+    localStorage.setItem(ADMIN_TOKEN_KEY, newToken);
+    localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(userData));
+    setToken(newToken);
+    setUser(userData);
+    setIsAuthenticated(true);
   };
 
   const logout = () => {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_USER_KEY);
+    setToken(null);
     setUser(null);
     setIsAuthenticated(false);
   };
 
   return (
+    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthInitialized, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    throw new Error("useAuth phải được sử dụng trong AuthProvider");
   }
   return context;
+}
+
+export default AuthContext;

@@ -9,8 +9,8 @@ const notifications = [
     description: "Trạm Thảo Điền chỉ còn 2 pin trống",
     time: "5 phút trước",
     type: "warning",
-    iconBg: "bg-warning/10 dark:bg-yellow-500/20",
-    iconColor: "text-warning dark:text-yellow-400"
+    iconBg: "bg-yellow-100 dark:bg-yellow-500/20",
+    iconColor: "text-yellow-600 dark:text-yellow-400"
   },
   {
     id: 2,
@@ -18,8 +18,8 @@ const notifications = [
     description: "Trần Thị B vừa đăng ký gói Premium",
     time: "15 phút trước",
     type: "success",
-    iconBg: "bg-success/10 dark:bg-green-500/20",
-    iconColor: "text-success dark:text-green-400"
+    iconBg: "bg-green-100 dark:bg-green-500/20",
+    iconColor: "text-green-600 dark:text-green-400"
   },
   {
     id: 3,
@@ -27,8 +27,8 @@ const notifications = [
     description: "Trạm Q3 - Võ Văn Tần đã trực tuyến trở lại",
     time: "1 giờ trước",
     type: "info",
-    iconBg: "bg-brand-500/10 dark:bg-brand-500/20",
-    iconColor: "text-brand-500 dark:text-brand-400"
+    iconBg: "bg-brand-100 dark:bg-brand-500/20",
+    iconColor: "text-brand-600 dark:text-brand-400"
   },
   {
     id: 4,
@@ -36,8 +36,8 @@ const notifications = [
     description: "Mất tín hiệu với Trạm Q7 - Lotte Mart",
     time: "2 giờ trước",
     type: "error",
-    iconBg: "bg-error/10 dark:bg-red-500/20",
-    iconColor: "text-error dark:text-red-400"
+    iconBg: "bg-red-100 dark:bg-red-500/20",
+    iconColor: "text-red-600 dark:text-red-400"
   },
   {
     id: 5,
@@ -45,8 +45,8 @@ const notifications = [
     description: "Hệ thống quản lý đã cập nhật phiên bản v2.1",
     time: "3 giờ trước",
     type: "info",
-    iconBg: "bg-brand-500/10 dark:bg-brand-500/20",
-    iconColor: "text-brand-500 dark:text-brand-400"
+    iconBg: "bg-brand-100 dark:bg-brand-500/20",
+    iconColor: "text-brand-600 dark:text-brand-400"
   },
   {
     id: 6,
@@ -54,8 +54,8 @@ const notifications = [
     description: "Trạm Q1 - Nguyễn Huệ có quá nhiều lượt đổi trong 1 giờ qua",
     time: "4 giờ trước",
     type: "warning",
-    iconBg: "bg-warning/10 dark:bg-yellow-500/20",
-    iconColor: "text-warning dark:text-yellow-400"
+    iconBg: "bg-yellow-100 dark:bg-yellow-500/20",
+    iconColor: "text-yellow-600 dark:text-yellow-400"
   },
   {
     id: 7,
@@ -63,8 +63,8 @@ const notifications = [
     description: "Lê Văn C đã hủy gia hạn gói Cơ bản",
     time: "Hôm qua",
     type: "error",
-    iconBg: "bg-error/10 dark:bg-red-500/20",
-    iconColor: "text-error dark:text-red-400"
+    iconBg: "bg-red-100 dark:bg-red-500/20",
+    iconColor: "text-red-600 dark:text-red-400"
   }
 ];
 

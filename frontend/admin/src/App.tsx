@@ -4,6 +4,8 @@ import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthRoute from "./components/AuthRoute";
 import Home from "./pages/Dashboard/Home";
 
 // EV Battery Swap Pages
@@ -21,23 +23,27 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-
-            {/* EV Battery Swap */}
-            <Route path="/stations" element={<StationManagement />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/subscriptions" element={<SubscriptionManagement />} />
-            <Route path="/reports" element={<ReportsDashboard />} />
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/account-settings" element={<AccountSettings />} />
-            <Route path="/support" element={<Support />} />
+          <Route element={<AuthRoute />}>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
           </Route>
 
-          {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+
+            {/* Dashboard Layout */}
+            <Route element={<AppLayout />}>
+              <Route index path="/" element={<Home />} />
+
+              {/* EV Battery Swap */}
+              <Route path="/stations" element={<StationManagement />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/subscriptions" element={<SubscriptionManagement />} />
+              <Route path="/reports" element={<ReportsDashboard />} />
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/support" element={<Support />} />
+            </Route>
+          </Route>
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

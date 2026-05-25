@@ -5,24 +5,30 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import { useAuth } from "../../context/AuthContext";
+
+type LoginResponse = {
+  accessToken?: string;
+  token?: string;
+  tokenType?: string;
+  role?: string;
+};
 
 export default function SignInForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   
-  // Thêm state isLoading
   const [isLoading, setIsLoading] = useState(false);
 
-  // Login Form states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Forgot Password flow states
   const [forgotStep, setForgotStep] = useState<"none" | "email" | "otp" | "reset">("none");
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
@@ -31,14 +37,14 @@ export default function SignInForm() {
   const [forgotError, setForgotError] = useState("");
   const [forgotSuccessMessage, setForgotSuccessMessage] = useState("");
 
-  // Live forgot password validation criteria
   const isForgotLengthValid = newPassword.length >= 8;
   const hasForgotUppercase = /[A-Z]/.test(newPassword);
   const hasForgotLowercase = /[a-z]/.test(newPassword);
   const hasForgotNumber = /[0-9]/.test(newPassword);
   const hasForgotSpecialChar = /[^A-Za-z0-9]/.test(newPassword);
 
-  // HÀM XỬ LÝ ĐĂNG NHẬP ĐÃ TÍCH HỢP API
+  const normalizeRole = (role?: string) => role?.toUpperCase().replace(/^ROLE_/, "") ?? "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -57,54 +63,60 @@ export default function SignInForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "accept": "*/*",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: email, // API dùng username, ta map từ state email sang
+          username: email, 
           password: password,
         }),
       });
 
       if (!response.ok) {
-        // Cố gắng đọc thông báo lỗi từ server nếu có
         const errorData = await response.json().catch(() => null);
         throw new Error(
           errorData?.message || "Tài khoản hoặc mật khẩu không chính xác!"
         );
       }
 
-      const data = await response.json();
-      
-      // Lưu token vào localStorage (thay 'accessToken' bằng key chính xác mà API của bạn trả về)
-      if (data.accessToken || data.token) {
-        localStorage.setItem("token", data.accessToken || data.token);
+      const data = (await response.json()) as LoginResponse;
+      const token = data.accessToken || data.token;
+      const role = normalizeRole(data.role);
+
+      if (!token) {
+        throw new Error("Máy chủ không trả về token đăng nhập hợp lệ.");
       }
 
-      setSuccess("Đăng nhập thành công! Đang chuyển hướng...");
+      if (role && role !== "ADMIN") {
+        throw new Error("Tài khoản này không có quyền truy cập giao diện Admin.");
+      }
+
+      login(token, {
+        username: email,
+        role: role || "ADMIN",
+      });
+
+      setSuccess(`Đăng nhập thành công với quyền ${role || "ADMIN"}! Đang chuyển hướng...`);
       setTimeout(() => {
-        navigate("/");
+        navigate("/", { replace: true });
       }, 1500);
 
-    } catch (err: any) {
-      setError(err.message || "Không thể kết nối đến máy chủ. Vui lòng thử lại!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Không thể kết nối đến máy chủ. Vui lòng thử lại!";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSocialLogin = (platform: string) => {
-    setError("");
-    setSuccess(`Đăng nhập thành công qua ${platform}! Đang chuyển hướng...`);
-    setTimeout(() => {
-      navigate("/");
-    }, 1500);
+    setSuccess("");
+    setError(`Đăng nhập qua ${platform} chưa được cấu hình cho giao diện Admin.`);
   };
 
-  // Các hàm Forgot Password giữ nguyên
   const handleForgotEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError("");
@@ -165,7 +177,7 @@ export default function SignInForm() {
   return (
     <div className="flex flex-col flex-1">
       {success && (
-        <div className="fixed top-5 right-5 z-[99999] rounded-xl bg-green-500 px-5 py-4 text-white shadow-xl transition-all animate-bounce">
+        <div className="fixed top-5 right-5 z-50 rounded-xl bg-green-500 px-5 py-4 text-white shadow-xl transition-all animate-bounce">
           <div className="flex items-center gap-3">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -318,7 +330,7 @@ export default function SignInForm() {
 
       {/* Forgot Password Flow Modal - GIỮ NGUYÊN NHƯ CŨ */}
       {forgotStep !== "none" && (
-        <div className="fixed inset-0 flex items-center justify-center overflow-y-auto z-[99999] bg-gray-400/50 dark:bg-black/75 backdrop-blur-[16px] p-4 transition-all">
+        <div className="fixed inset-0 flex items-center justify-center overflow-y-auto z-50 bg-gray-400/50 dark:bg-black/75 backdrop-blur-lg p-4 transition-all">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-2xl relative">
             <button
               onClick={() => setForgotStep("none")}

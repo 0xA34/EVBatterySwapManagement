@@ -59,8 +59,7 @@ export default function Login() {
 
         navigate('/inventory', { replace: true });
       } else {
-        // Có thể lấy message lỗi từ API nếu server có trả về
-        // const errorData = await response.json();
+
         setError('Tài khoản hoặc mật khẩu không chính xác.');
       }
     } catch (err) {

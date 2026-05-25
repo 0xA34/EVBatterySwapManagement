@@ -40,7 +40,6 @@ export default function SubscriptionManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -74,14 +73,12 @@ export default function SubscriptionManagement() {
     const featuresArray = formData.features.split("\n").filter(f => f.trim() !== "");
     
     if (editingSub) {
-      // Update
       setSubscriptions(subscriptions.map(s => 
         s.id === editingSub.id 
           ? { ...editingSub, name: formData.name, price: formData.price, features: featuresArray, isPremium: formData.isPremium }
           : s
       ));
     } else {
-      // Create
       const newSub: Subscription = {
         id: Date.now().toString(),
         name: formData.name,
@@ -139,7 +136,7 @@ export default function SubscriptionManagement() {
                   </button>
                   <button 
                     onClick={() => handleDelete(sub.id)}
-                    className="flex-1 px-4 py-2 bg-error/10 text-error rounded hover:bg-error/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-colors"
+                    className="flex-1 px-4 py-2 bg-red-100 text-red-500 rounded hover:bg-red-200 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-colors font-medium"
                   >
                     Ngừng áp dụng
                   </button>
