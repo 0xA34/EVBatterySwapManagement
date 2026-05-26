@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.repository;
 
+import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -52,5 +54,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Transactional
     @Query("UPDATE User u SET u.password = :password, u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :id")
     int updatePasswordById(@Param("id") int id, @Param("password") String password);
+
+    @Query("SELECT new com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse(u.status, COUNT(u)) " +
+            "FROM User u GROUP BY u.status")
+    List<UserStatusCountResponse> countUsersByStatus();
 
 }

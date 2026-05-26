@@ -2,7 +2,9 @@ package com.team4tech.evbatteryswap.controller.admin;
 
 import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
+import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
+import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -151,4 +154,13 @@ public class AdminUserController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/countUserByStatus")
+    public List<UserStatusCountResponse> countUserByStatus() {
+
+        return userService.countUsersByStatus();
+    }
+
+
+
 }

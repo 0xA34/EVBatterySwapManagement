@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
+import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -155,6 +157,30 @@ public class UserService implements IUserService {
         return userRepository.findPasswordById(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserStatusCountResponse> countUsersByStatus() {
+        // 1. Lấy dữ liệu thực tế từ database (có thể thiếu nếu status đó chưa có user nào)
+        List<UserStatusCountResponse> dbResults = userRepository.countUsersByStatus();
+
+        // Chuyển danh sách từ DB thành Map để dễ tra cứu: Key là Status, Value là Count
+        Map<String, Long> dbResultMap = dbResults.stream()
+                .collect(Collectors.toMap(UserStatusCountResponse::getStatus, UserStatusCountResponse::getCount));
+
+        // 2. Định nghĩa danh sách 3 trạng thái bắt buộc của User
+        List<String> allStatuses = Arrays.asList("ACTIVE", "CHECKPOINT", "BANNED");
+
+        // 3. Tạo danh sách kết quả cuối cùng, điền 0 nếu trạng thái đó trống
+        List<UserStatusCountResponse> finalResults = new ArrayList<>();
+
+        for (String status : allStatuses) {
+            // Nếu DB có trạng thái này thì lấy số lượng từ DB, ngược lại thì gán bằng 0
+            long count = dbResultMap.getOrDefault(status, 0L);
+            finalResults.add(new UserStatusCountResponse(status, count));
+        }
+
+        return finalResults;
+    }
 
 }
 

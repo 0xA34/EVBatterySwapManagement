@@ -2,11 +2,13 @@ package com.team4tech.evbatteryswap.service.interfaces;
 
 import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
+import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IUserService {
@@ -20,6 +22,8 @@ public interface IUserService {
             @Param("role") String role,
             Pageable pageable
     );
+
+    List<UserStatusCountResponse> countUsersByStatus();
 
     Page<User> searchByUsername(String username, Pageable pageable);
 
