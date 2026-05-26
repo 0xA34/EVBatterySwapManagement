@@ -22,10 +22,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 
     @Query("SELECT u FROM User u WHERE " +
-            "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(u.email)    LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<User> filterByKeyword(@Param("keyword") String keyword, Pageable pageable);
+            "(CAST(:keyword AS string) IS NULL OR " +
+            " LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) OR " +
+            " LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) OR " +
+            " LOWER(u.email)    LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) AND " +
+            "(:status IS NULL OR u.status = :status) AND " +
+            "(:role IS NULL OR u.role = :role)")
+    Page<User> searchAndFilterUsers(
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            @Param("role") String role,
+            Pageable pageable
+    );
 
     @Query("SELECT u.password FROM User u WHERE u.id = :id")
     Optional<String> findPasswordById(@Param("id") int id);

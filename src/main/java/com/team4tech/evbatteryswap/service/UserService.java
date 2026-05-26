@@ -48,14 +48,19 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<User> filterByKeyword(@Param("keyword") String keyword, Pageable pageable) {
-        return userRepository.filterByKeyword(keyword, pageable);
+    public Page<User> searchByUsername(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<User> searchByUsername(String username, Pageable pageable) {
-        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
+    public Page<User> searchAndFilterUsers(
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            @Param("role") String role,
+            Pageable pageable
+    ) {
+        return userRepository.searchAndFilterUsers(keyword, status, role, pageable);
     }
 
     @Override

@@ -30,21 +30,21 @@ public class AdminUserController {
 
     private final UserService userService;
 
-    @Operation(
-        summary = "Liệt kê tất cả người dùng",
-        description = "Trả về danh sách người dùng được phân trang. Hỗ trợ tìm kiếm từ khóa theo tên người dùng, họ tên hoặc email."
-    )
-    @GetMapping
-    public ResponseEntity<Page<UserResponse>> listUsers(
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "15") int size,
-            @RequestParam(required = false)    String search
-    ) {
-        Page<UserResponse> result = userService
-                .filterByKeyword(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
-                .map(UserResponse::from);
-        return ResponseEntity.ok(result);
-    }
+//    @Operation(
+//        summary = "Liệt kê tất cả người dùng",
+//        description = "Trả về danh sách người dùng được phân trang. Hỗ trợ tìm kiếm từ khóa theo tên người dùng, họ tên hoặc email."
+//    )
+//    @GetMapping
+//    public ResponseEntity<Page<UserResponse>> listUsers(
+//            @RequestParam(defaultValue = "0")  int page,
+//            @RequestParam(defaultValue = "15") int size,
+//            @RequestParam(required = false) String search
+//    ) {
+//        Page<UserResponse> result = userService
+//                .filterByKeyword(search, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+//                .map(UserResponse::from);
+//        return ResponseEntity.ok(result);
+//    }
 
     @Operation(summary = "Tìm user theo ID")
 
@@ -57,6 +57,15 @@ public class AdminUserController {
         roleMap.put("DRIVER", "Khách Hàng");
 
         return ResponseEntity.ok(roleMap);
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, String>> getListStatus() {
+        Map<String, String> statusMap = new LinkedHashMap<>();
+        statusMap.put("ACTIVE", "Đang Hoạt Động");
+        statusMap.put("BANNED", "Vô Hiệu Hóa");
+        statusMap.put("CHECKPOINT", "Chờ Phê Duyệt");
+        return ResponseEntity.ok(statusMap);
     }
 
     @GetMapping("/{id}")
@@ -79,6 +88,22 @@ public class AdminUserController {
                 .map(UserResponse::from);
         return ResponseEntity.ok(result);
     }
+
+
+    @GetMapping("/getListUsers")
+    public ResponseEntity<Page<UserResponse>> getListUsers(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String role
+    ) {
+        Page<UserResponse> result = userService
+                .searchAndFilterUsers(keyword, status, role, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .map(UserResponse::from);
+        return ResponseEntity.ok(result);
+    }
+
 
     @Operation(
         summary = "Tạo một user mới",
