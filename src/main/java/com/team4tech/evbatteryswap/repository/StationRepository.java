@@ -17,24 +17,20 @@ import java.util.Optional;
 public interface StationRepository extends JpaRepository<Station, Integer> {
 
     @Query("SELECT s FROM Station s WHERE " +
+            "(CAST(:keyword AS string) IS NULL OR " +
+            " LOWER(s.name) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) OR " +
+            " LOWER(s.address) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) AND " +
             "(:status IS NULL OR s.status = :status) AND " +
             "(:quan IS NULL OR s.quan.id = :quan) AND " +
             "(:province IS NULL OR s.province.id = :province) AND " +
             "(:phuongxa IS NULL OR s.phuongxa.id = :phuongxa)")
-    Page<Station> findStations(
+
+    Page<Station> findStationsWithKeyword(
+            @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("quan") Integer quan,
             @Param("province") Integer province,
             @Param("phuongxa") Integer phuongxa,
-            Pageable pageable
-    );
-
-
-    @Query("SELECT s FROM Station s WHERE " +
-            "LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(s.address) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<Station> searchByKeyword(
-            @Param("keyword") String keyword,
             Pageable pageable
     );
 

@@ -14,7 +14,8 @@ public interface IStationService {
 
     Page<Station> findAll(Pageable pageable);
 
-    Page<Station> findStations(
+    Page<Station> findStationsWithKeyword(
+            @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("quan") Integer quan,
             @Param("province") Integer province,
@@ -24,7 +25,6 @@ public interface IStationService {
 
     Optional<Station> findById(int id);
 
-    Page<Station> searchByKeyword(String keyword, Pageable pageable);
 
     Station createStation(StationRequest request);
 

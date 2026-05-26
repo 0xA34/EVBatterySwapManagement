@@ -34,26 +34,21 @@ public class StationService implements IStationService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Station> findStations(
+    public Page<Station> findStationsWithKeyword(
+            @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("quan") Integer quan,
             @Param("province") Integer province,
             @Param("phuongxa") Integer phuongxa,
             Pageable pageable
     ) {
-        return stationRepository.findStations(status, quan, province, phuongxa, pageable);
+        return stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Station> findById(int id) {
         return stationRepository.findById(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Station> searchByKeyword(String keyword, Pageable pageable) {
-        return stationRepository.searchByKeyword(keyword, pageable);
     }
 
     @Override

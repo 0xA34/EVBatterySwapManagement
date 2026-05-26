@@ -39,13 +39,14 @@ public class AdminStationController {
     public ResponseEntity<Page<StationResponse>> listStations(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false)    String status,
             @RequestParam(required = false)    Integer quan,
             @RequestParam(required = false)    Integer province,
             @RequestParam(required = false)    Integer phuongxa
     ) {
         Page<StationResponse> result = stationService
-                .findStations(status, quan, province, phuongxa,
+                .findStationsWithKeyword(keyword, status, quan, province, phuongxa,
                         PageRequest.of(page, size, Sort.by("createdAt").descending()))
                 .map(StationResponse::from);
         return ResponseEntity.ok(result);
@@ -63,21 +64,21 @@ public class AdminStationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(
-        summary = "Tìm kiếm trạm theo từ khóa",
-        description = "Tìm kiếm trạm đổi pin theo từ khóa (tên hoặc địa chỉ). Hỗ trợ phân trang."
-    )
-    @GetMapping("/search")
-    public ResponseEntity<Page<StationResponse>> searchStations(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "15") int size
-    ) {
-        Page<StationResponse> result = stationService
-                .searchByKeyword(keyword, PageRequest.of(page, size, Sort.by("createdAt").descending()))
-                .map(StationResponse::from);
-        return ResponseEntity.ok(result);
-    }
+//    @Operation(
+//        summary = "Tìm kiếm trạm theo từ khóa",
+//        description = "Tìm kiếm trạm đổi pin theo từ khóa (tên hoặc địa chỉ). Hỗ trợ phân trang."
+//    )
+//    @GetMapping("/search")
+//    public ResponseEntity<Page<StationResponse>> searchStations(
+//            @RequestParam String keyword,
+//            @RequestParam(defaultValue = "0")  int page,
+//            @RequestParam(defaultValue = "15") int size
+//    ) {
+//        Page<StationResponse> result = stationService
+//                .searchByKeyword(keyword, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+//                .map(StationResponse::from);
+//        return ResponseEntity.ok(result);
+//    }
 
     @Operation(
         summary = "Tạo trạm mới",

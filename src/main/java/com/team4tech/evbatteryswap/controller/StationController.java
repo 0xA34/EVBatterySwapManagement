@@ -22,13 +22,14 @@ public class StationController {
     public Page<Station> getStationPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
+            @RequestParam String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer quan,
             @RequestParam(required = false) Integer province,
             @RequestParam(required = false) Integer phuongxa
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return stationService.findStations(status, quan, province, phuongxa, pageable);
+        return stationService.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
     }
 
 
