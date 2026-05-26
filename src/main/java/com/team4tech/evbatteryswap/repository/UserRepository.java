@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.repository;
 
+import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import org.springframework.data.domain.Page;
@@ -58,5 +59,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT new com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse(u.status, COUNT(u)) " +
             "FROM User u GROUP BY u.status")
     List<UserStatusCountResponse> countUsersByStatus();
+
+
+    @Query("SELECT new com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse(u.role, COUNT(u)) " +
+            "FROM User u GROUP BY u.role")
+    List<UserRoleCountResponse> countUsersByRole();
+
 
 }
