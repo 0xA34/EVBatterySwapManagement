@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
+import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.service.UserService;
@@ -161,6 +162,10 @@ public class AdminUserController {
         return userService.countUsersByStatus();
     }
 
+    @GetMapping("/countUserByRole")
+    public List<UserRoleCountResponse> countUserByRole() {
 
+        return userService.countUsersByRole();
+    }
 
 }

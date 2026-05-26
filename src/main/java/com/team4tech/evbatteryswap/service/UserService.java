@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
+import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
@@ -181,6 +182,31 @@ public class UserService implements IUserService {
 
         return finalResults;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserRoleCountResponse> countUsersByRole() {
+        // 1. Lấy dữ liệu thực tế từ database (ví dụ hệ thống mới chỉ có ADMIN và STAFF)
+        List<UserRoleCountResponse> dbResults = userRepository.countUsersByRole();
+
+        // Chuyển danh sách từ DB thành Map: Key là Role, Value là Count
+        Map<String, Long> dbResultMap = dbResults.stream()
+                .collect(Collectors.toMap(UserRoleCountResponse::getRole, UserRoleCountResponse::getCount));
+
+        // 2. Định nghĩa danh sách 3 role bắt buộc phải hiển thị
+        List<String> allRoles = Arrays.asList("DRIVER", "ADMIN", "STAFF");
+
+        // 3. Tạo danh sách kết quả cuối cùng, điền số 0 nếu chưa có user nào thuộc role đó
+        List<UserRoleCountResponse> finalResults = new ArrayList<>();
+
+        for (String role : allRoles) {
+            // Nếu DB có dữ liệu thì lấy, không thì mặc định là 0L
+            long count = dbResultMap.getOrDefault(role, 0L);
+            finalResults.add(new UserRoleCountResponse(role, count));
+        }
+        return finalResults;
+    }
+
 
 }
 
