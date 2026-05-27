@@ -110,8 +110,8 @@ public class AdminUserController {
 
 
     @Operation(
-        summary = "Tạo một user mới",
-        description = "Tạo tài khoản người dùng mới. Trả về mã 400 nếu tên người dùng hoặc email đã tồn tại."
+            summary = "Tạo một user mới",
+            description = "Tạo tài khoản người dùng mới. Trả về mã 400 nếu tên người dùng hoặc email đã tồn tại."
     )
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRegisterRequest request) {
@@ -124,8 +124,8 @@ public class AdminUserController {
     }
 
     @Operation(
-        summary = "Cập nhật user đang có tồn tại",
-        description = "Cập nhật thông tin người dùng theo ID. Trường mật khẩu là tùy chọn — bỏ qua trường này để giữ nguyên mật khẩu hiện tại. Trả về mã lỗi 404 nếu người dùng không tồn tại, hoặc 400 nếu tên người dùng/email trùng với người dùng khác."
+            summary = "Cập nhật user đang có tồn tại",
+            description = "Cập nhật thông tin người dùng theo ID. Trường mật khẩu là tùy chọn — bỏ qua trường này để giữ nguyên mật khẩu hiện tại. Trả về mã lỗi 404 nếu người dùng không tồn tại, hoặc 400 nếu tên người dùng/email trùng với người dùng khác."
     )
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(
@@ -143,8 +143,8 @@ public class AdminUserController {
     }
 
     @Operation(
-        summary = "Xóa một User.",
-        description = "Xóa một user bằng ID. Trả về 204 nếu thành công hoặc 404 nếu user đó không tồn tại."
+            summary = "Xóa một User.",
+            description = "Xóa một user bằng ID. Trả về 204 nếu thành công hoặc 404 nếu user đó không tồn tại."
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable int id) {

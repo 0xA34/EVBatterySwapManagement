@@ -35,6 +35,7 @@ export default function StationManagement() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
   const [searchIdInput, setSearchIdInput] = useState("");
@@ -94,14 +95,11 @@ export default function StationManagement() {
         setTotalPages(1);
         setCurrentPage(0);
       } else {
-        let url = `/api/admin/stations?page=${page}&size=15`;
-        if (keyword.trim()) {
-          url = `/api/admin/stations/search?keyword=${encodeURIComponent(keyword.trim())}&page=${page}&size=15`;
-        } else {
-          if (province > 0) url += `&province=${province}`;
-          if (district > 0) url += `&quan=${district}`;
-          if (ward > 0) url += `&phuongxa=${ward}`;
-        }
+        let url = `/api/admin/stations?page=${page}&size=${pageSize}`;
+        if (keyword.trim()) url += `&keyword=${encodeURIComponent(keyword.trim())}`;
+        if (province > 0) url += `&province=${province}`;
+        if (district > 0) url += `&quan=${district}`;
+        if (ward > 0) url += `&phuongxa=${ward}`;
         if (status) url += `&status=${status}`;
           
         const response = await fetch(url, {
@@ -113,8 +111,8 @@ export default function StationManagement() {
           throw new Error("Lỗi khi tải danh sách trạm");
         }
         const data = await response.json();
-        setStations(data.content);
-        setTotalPages(data.totalPages);
+        setStations(data.content || []);
+        setTotalPages(data.page ? data.page.totalPages : (data.totalPages || 1));
       }
 
       try {
@@ -141,7 +139,7 @@ export default function StationManagement() {
     if (token) {
       fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
     }
-  }, [token, currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus]);
+  }, [token, currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus, pageSize]);
 
   useEffect(() => {
     if (searchProvince && token) {
@@ -597,11 +595,26 @@ export default function StationManagement() {
           </div>
           
           {/* Pagination */}
-          {totalPages > 1 && (
+          {(totalPages > 1 || stations.length > 0) && (
             <div className="flex justify-between items-center mt-6 px-5 border-t border-gray-100 dark:border-gray-800 pt-4">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Trang {currentPage + 1} / {totalPages}
-              </span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Trang {currentPage + 1} / {totalPages}
+                </span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(0);
+                  }}
+                  className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="10">10 / trang</option>
+                  <option value="20">20 / trang</option>
+                  <option value="50">50 / trang</option>
+                  <option value="100">100 / trang</option>
+                </select>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
