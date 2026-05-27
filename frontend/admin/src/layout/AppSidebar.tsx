@@ -51,6 +51,11 @@ const evBatteryItems: NavItem[] = [
   },
   {
     icon: <PlugInIcon />,
+    name: "Quản Lý Pin",
+    path: "/batteries",
+  },
+  {
+    icon: <PlugInIcon />,
     name: "Gói Thuê Pin",
     path: "/subscriptions",
   },
@@ -59,10 +64,15 @@ const evBatteryItems: NavItem[] = [
     name: "Báo Cáo",
     path: "/reports",
   },
+  {
+    icon: <UserCircleIcon />,
+    name: "Hỗ Trợ",
+    path: "/support",
+  },
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered } = useSidebar();
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -263,8 +273,6 @@ const AppSidebar: React.FC = () => {
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         className={`py-8 flex ${

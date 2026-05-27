@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
@@ -21,9 +21,123 @@ type Station = {
   updatedAt?: string;
 };
 
-type Province = { id: number; tinhthanhcol: string; bienso: string };
-type District = { id: number; tenquanhuyen: string };
-type Ward = { id: number; tenphuongxa: string };
+type Province = { id: number; tinhthanhcol: string; bienso: string; count_station?: number };
+type District = { id: number; tenquanhuyen: string; count_station?: number };
+type Ward = { id: number; tenphuongxa: string; count_station?: number };
+
+interface DropdownOption {
+  value: number;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: number;
+  onChange: (val: number) => void;
+  options: DropdownOption[];
+  placeholder: string;
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+}
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+  required = false,
+  className = ""
+}: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value);
+
+  return (
+    <div ref={dropdownRef} className={`relative ${className}`}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex justify-between items-center rounded-lg border border-gray-300 ${
+          className.includes("w-full") ? "px-4" : "px-3"
+        } py-2 text-sm text-left bg-white focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:opacity-50 select-none cursor-pointer`}
+      >
+        <span className="truncate">
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+
+      <select
+        required={required}
+        value={value || ""}
+        onChange={(e) => onChange(Number(e.target.value))}
+        tabIndex={-1}
+        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 left-0 top-full mt-1 min-w-full w-max max-w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-700 max-h-60 overflow-y-auto">
+          <ul className="py-1">
+            <li
+              onClick={() => {
+                onChange(0);
+                setIsOpen(false);
+              }}
+              className={`px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${value === 0 ? "bg-gray-50 dark:bg-gray-800 font-semibold" : ""}`}
+            >
+              {placeholder}
+            </li>
+            {options.map(option => (
+              <li
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${value === option.value ? "bg-gray-50 dark:bg-gray-800 font-semibold text-brand-600 dark:text-brand-400" : ""}`}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StationManagement() {
   const { token } = useAuth();
@@ -143,7 +257,7 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (searchProvince && token) {
-      fetch(`/api/donvihanhchinh/quanHuyen?idTinhThanh=${searchProvince}`, {
+      fetch(`/api/donvihanhchinh/quanHuyenCount?idTinhThanh=${searchProvince}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -159,7 +273,7 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (searchDistrict && token) {
-      fetch(`/api/donvihanhchinh/phuongXa?idQuanHuyen=${searchDistrict}`, {
+      fetch(`/api/donvihanhchinh/phuongXaCount?idQuanHuyen=${searchDistrict}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -175,7 +289,7 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (token) {
-      fetch('/api/donvihanhchinh/tinhThanh', {
+      fetch('/api/donvihanhchinh/tinhThanhCount', {
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -189,7 +303,7 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (formData.province && token) {
-      fetch(`/api/donvihanhchinh/quanHuyen?idTinhThanh=${formData.province}`, {
+      fetch(`/api/donvihanhchinh/quanHuyenCount?idTinhThanh=${formData.province}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -205,7 +319,7 @@ export default function StationManagement() {
 
   useEffect(() => {
     if (formData.quan && token) {
-      fetch(`/api/donvihanhchinh/phuongXa?idQuanHuyen=${formData.quan}`, {
+      fetch(`/api/donvihanhchinh/phuongXaCount?idQuanHuyen=${formData.quan}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -218,23 +332,6 @@ export default function StationManagement() {
       setWards([]);
     }
   }, [formData.quan, token]);
-
-  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({
-      ...formData, 
-      province: Number(e.target.value),
-      quan: 0,
-      phuongxa: 0
-    });
-  };
-
-  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({
-      ...formData, 
-      quan: Number(e.target.value),
-      phuongxa: 0
-    });
-  };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -384,112 +481,141 @@ export default function StationManagement() {
       <PageBreadcrumb pageTitle="Quản Lý Trạm Đổi Pin" />
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Danh sách các trạm {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
-            </h2>
-            <button 
-              onClick={() => handleOpenModal()}
-              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              + Thêm trạm mới
-            </button>
+        {/* Summary Stats Grid - Standalone cards directly on page */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          {/* Total Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Tổng số trạm</p>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {statusCounts.reduce((sum, c) => sum + c.count, 0)}
+            </h3>
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800/50 dark:border-gray-800 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-            <div className="grid grid-cols-2 gap-2 w-full xl:w-auto">
-              {['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'DEPLOYING'].map(st => {
-                const count = statusCounts.find(c => c.status === st)?.count || 0;
-                let label = "";
-                let colorClass = "";
-                if (st === 'ACTIVE') { label = "Hoạt động"; colorClass = "bg-green-100 text-green-700 dark:bg-green-500/30 dark:text-green-400"; }
-                if (st === 'INACTIVE') { label = "Ngừng hoạt động"; colorClass = "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/30 dark:text-yellow-400"; }
-                if (st === 'MAINTENANCE') { label = "Bảo trì"; colorClass = "bg-red-100 text-red-700 dark:bg-red-500/30 dark:text-red-400"; }
-                if (st === 'DEPLOYING') { label = "Đang triển khai"; colorClass = "bg-blue-100 text-blue-700 dark:bg-blue-500/30 dark:text-blue-400"; }
-                
-                return (
-                  <div key={st} className={`px-5 py-2 rounded-lg text-sm font-medium flex justify-between gap-25 items-center ${colorClass}`}>
-                    <span>{label}</span>
-                    <span className="font-bold text-base">{count}</span>
-                  </div>
-                );
-              })}
+          {/* Active Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Hoạt động</p>
+            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {statusCounts.find(c => c.status === 'ACTIVE')?.count || 0}
+            </h3>
+          </div>
+
+          {/* Inactive Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Ngừng hoạt động</p>
+            <h3 className="text-2xl font-bold text-yellow-500 dark:text-yellow-400">
+              {statusCounts.find(c => c.status === 'INACTIVE')?.count || 0}
+            </h3>
+          </div>
+
+          {/* Maintenance Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bảo trì</p>
+            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {statusCounts.find(c => c.status === 'MAINTENANCE')?.count || 0}
+            </h3>
+          </div>
+
+          {/* Deploying Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Đang triển khai</p>
+            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {statusCounts.find(c => c.status === 'DEPLOYING')?.count || 0}
+            </h3>
+          </div>
+        </div>
+
+        {/* Filter and Search Panel - Separated premium card */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+          <form onSubmit={handleSearch} className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Danh sách các trạm {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
+              </h2>
+              <button 
+                type="button"
+                onClick={() => handleOpenModal()}
+                className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-semibold whitespace-nowrap cursor-pointer"
+              >
+                + Thêm trạm mới
+              </button>
             </div>
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 w-full xl:w-fit ml-auto">
-              <div className="flex flex-wrap gap-3 items-center xl:justify-end justify-start">
-                <input
-                  type="number"
-                  placeholder="ID trạm..."
-                  value={searchIdInput}
-                  onChange={(e) => setSearchIdInput(e.target.value)}
-                  className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                />
-                <input
-                  type="text"
-                  placeholder="Từ khóa..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                />
-                <select
-                  value={searchStatus}
-                  onChange={(e) => setSearchStatus(e.target.value)}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="">Trạng thái</option>
-                  <option value="ACTIVE">Hoạt động</option>
-                  <option value="INACTIVE">Ngừng hoạt động</option>
-                  <option value="MAINTENANCE">Bảo trì</option>
-                  <option value="DEPLOYING">Đang triển khai</option>
-                </select>
+            
+            <div className="flex flex-wrap gap-3 items-center justify-start w-full">
+              <input
+                type="number"
+                placeholder="ID trạm..."
+                value={searchIdInput}
+                onChange={(e) => setSearchIdInput(e.target.value)}
+                className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              />
+              <input
+                type="text"
+                placeholder="Từ khóa..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              />
+              <select
+                value={searchStatus}
+                onChange={(e) => setSearchStatus(e.target.value)}
+                className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="">Trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="INACTIVE">Ngừng hoạt động</option>
+                <option value="MAINTENANCE">Bảo trì</option>
+                <option value="DEPLOYING">Đang triển khai</option>
+              </select>
+              
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"></div>
+              
+              <CustomSelect
+                value={searchProvince}
+                onChange={(val) => {
+                  setSearchProvince(val);
+                  setSearchDistrict(0);
+                  setSearchWard(0);
+                }}
+                options={(provinces || []).map(p => ({
+                  value: p.id,
+                  label: `${p.tinhthanhcol}${p.count_station !== undefined ? ` (${p.count_station})` : ""}`
+                }))}
+                placeholder="Tỉnh/Thành"
+                className="w-32 sm:w-40"
+              />
+              <CustomSelect
+                value={searchDistrict}
+                onChange={(val) => {
+                  setSearchDistrict(val);
+                  setSearchWard(0);
+                }}
+                disabled={!searchProvince}
+                options={(searchDistricts || []).map(d => ({
+                  value: d.id,
+                  label: `${d.tenquanhuyen}${d.count_station !== undefined ? ` (${d.count_station})` : ""}`
+                }))}
+                placeholder="Quận/Huyện"
+                className="w-32 sm:w-40"
+              />
+              <CustomSelect
+                value={searchWard}
+                onChange={(val) => setSearchWard(val)}
+                disabled={!searchDistrict}
+                options={(searchWards || []).map(w => ({
+                  value: w.id,
+                  label: `${w.tenphuongxa}${w.count_station !== undefined ? ` (${w.count_station})` : ""}`
+                }))}
+                placeholder="Phường/Xã"
+                className="w-32 sm:w-40"
+              />
+              
+              <div className="flex gap-2 lg:ml-auto">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-semibold cursor-pointer"
                 >
-                  Lọc
+                  Tìm Kiếm
                 </button>
-              </div>
-              <div className="flex flex-wrap gap-3 items-center justify-start">
-                <select
-                  value={searchProvince || ""}
-                  onChange={(e) => {
-                    setSearchProvince(Number(e.target.value));
-                    setSearchDistrict(0);
-                    setSearchWard(0);
-                  }}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="">Tỉnh/Thành</option>
-                  {Array.isArray(provinces) && provinces.map(p => (
-                    <option key={p.id} value={p.id}>{p.tinhthanhcol}</option>
-                  ))}
-                </select>
-                <select
-                  value={searchDistrict || ""}
-                  onChange={(e) => {
-                    setSearchDistrict(Number(e.target.value));
-                    setSearchWard(0);
-                  }}
-                  disabled={!searchProvince}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:opacity-50"
-                >
-                  <option value="">Quận/Huyện</option>
-                  {Array.isArray(searchDistricts) && searchDistricts.map(d => (
-                    <option key={d.id} value={d.id}>{d.tenquanhuyen}</option>
-                  ))}
-                </select>
-                <select
-                  value={searchWard || ""}
-                  onChange={(e) => setSearchWard(Number(e.target.value))}
-                  disabled={!searchDistrict}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:opacity-50"
-                >
-                  <option value="">Phường/Xã</option>
-                  {Array.isArray(searchWards) && searchWards.map(w => (
-                    <option key={w.id} value={w.id}>{w.tenphuongxa}</option>
-                  ))}
-                </select>
                 <button
                   type="button"
                   onClick={() => {
@@ -507,7 +633,7 @@ export default function StationManagement() {
                     setCurrentSearchWard(0);
                     setCurrentPage(0);
                   }}
-                  className="px-4 py-2 flex items-center justify-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 cursor-pointer"
                   title="Làm mới"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -515,8 +641,8 @@ export default function StationManagement() {
                   </svg>
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
         
         {error && (
@@ -559,7 +685,7 @@ export default function StationManagement() {
                       {station.address}
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {station.phuongxaName ? `${station.phuongxaName}, ` : ""}{station.quanName || ""}
+                      {station.phuongxaName ? `${station.phuongxaName}, ` : ""}{station.quanName ? `${station.quanName}, ` : ""}{station.provinceName || ""}
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeColor(station.status)}`}>
@@ -677,51 +803,64 @@ export default function StationManagement() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tỉnh/Thành
                   </label>
-                  <select 
+                  <CustomSelect 
                     required
-                    value={formData.province || ""}
-                    onChange={handleProvinceChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  >
-                    <option value="">Chọn Tỉnh/Thành</option>
-                    {Array.isArray(provinces) && provinces.map(p => (
-                      <option key={p.id} value={p.id}>{p.tinhthanhcol}</option>
-                    ))}
-                  </select>
+                    value={formData.province}
+                    onChange={(val) => {
+                      setFormData({
+                        ...formData, 
+                        province: val,
+                        quan: 0,
+                        phuongxa: 0
+                      });
+                    }}
+                    options={(provinces || []).map(p => ({
+                      value: p.id,
+                      label: `${p.tinhthanhcol}${p.count_station !== undefined ? ` (${p.count_station})` : ""}`
+                    }))}
+                    placeholder="Chọn Tỉnh/Thành"
+                    className="w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Quận/Huyện
                   </label>
-                  <select 
+                  <CustomSelect 
                     required
-                    value={formData.quan || ""}
-                    onChange={handleDistrictChange}
+                    value={formData.quan}
+                    onChange={(val) => {
+                      setFormData({
+                        ...formData, 
+                        quan: val,
+                        phuongxa: 0
+                      });
+                    }}
                     disabled={!formData.province}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  >
-                    <option value="">Chọn Quận/Huyện</option>
-                    {Array.isArray(districts) && districts.map(d => (
-                      <option key={d.id} value={d.id}>{d.tenquanhuyen}</option>
-                    ))}
-                  </select>
+                    options={(districts || []).map(d => ({
+                      value: d.id,
+                      label: `${d.tenquanhuyen}${d.count_station !== undefined ? ` (${d.count_station})` : ""}`
+                    }))}
+                    placeholder="Chọn Quận/Huyện"
+                    className="w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phường/Xã
                   </label>
-                  <select 
+                  <CustomSelect 
                     required
-                    value={formData.phuongxa || ""}
-                    onChange={(e) => setFormData({...formData, phuongxa: Number(e.target.value)})}
+                    value={formData.phuongxa}
+                    onChange={(val) => setFormData({...formData, phuongxa: val})}
                     disabled={!formData.quan}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  >
-                    <option value="">Chọn Phường/Xã</option>
-                    {Array.isArray(wards) && wards.map(w => (
-                      <option key={w.id} value={w.id}>{w.tenphuongxa}</option>
-                    ))}
-                  </select>
+                    options={(wards || []).map(w => ({
+                      value: w.id,
+                      label: `${w.tenphuongxa}${w.count_station !== undefined ? ` (${w.count_station})` : ""}`
+                    }))}
+                    placeholder="Chọn Phường/Xã"
+                    className="w-full"
+                  />
                 </div>
               </div>
 

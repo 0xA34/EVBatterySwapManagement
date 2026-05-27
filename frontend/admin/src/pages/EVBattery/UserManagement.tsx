@@ -108,10 +108,10 @@ export default function UserManagement() {
       // Tải thống kê số lượng người dùng theo Trạng thái & Vai trò
       try {
         const [statusRes, roleRes] = await Promise.all([
-          fetch("/api/admin/users/countUserByStatus", {
+          fetch("/api/admin/users/count?type=status", {
             headers: { "Authorization": `Bearer ${token}` }
           }),
-          fetch("/api/admin/users/countUserByRole", {
+          fetch("/api/admin/users/count?type=role", {
             headers: { "Authorization": `Bearer ${token}` }
           })
         ]);
@@ -274,97 +274,107 @@ export default function UserManagement() {
       <PageBreadcrumb pageTitle="Quản Lý Người Dùng" />
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Danh sách người dùng {isLoading && <span className="text-sm font-normal text-gray-500">(Đang tải...)</span>}
-            </h2>
-            <button 
-              onClick={() => handleOpenModal()}
-              className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              + Thêm người dùng
-            </button>
+        {/* Summary Stats Grid - Standalone cards directly on page */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          {/* Admin Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Quản trị viên</p>
+            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.role_ADMIN || 0}</h3>
+          </div>
+          
+          {/* Staff Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Nhân viên trạm</p>
+            <h3 className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.role_STAFF || 0}</h3>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800/50 dark:border-gray-800 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
-            <div className="flex flex-col gap-3 w-full xl:flex-1 xl:max-w-3xl">
-              {/* Row 1: Vai trò */}
-              <div className="grid grid-cols-3 gap-3 w-full">
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-red-50 text-red-700 border border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/10">
-                  <span className="whitespace-nowrap">Quản trị viên</span>
-                  <span className="font-bold text-base">{stats.role_ADMIN || 0}</span>
-                </div>
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-purple-50 text-purple-700 border border-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/10">
-                  <span className="whitespace-nowrap">Nhân viên trạm</span>
-                  <span className="font-bold text-base">{stats.role_STAFF || 0}</span>
-                </div>
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/10">
-                  <span className="whitespace-nowrap">Khách hàng</span>
-                  <span className="font-bold text-base">{stats.role_DRIVER || 0}</span>
-                </div>
-              </div>
-              {/* Row 2: Trạng thái */}
-              <div className="grid grid-cols-3 gap-3 w-full">
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-green-50 text-green-700 border border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/10">
-                  <span className="whitespace-nowrap">Hoạt động</span>
-                  <span className="font-bold text-base">{stats.status_ACTIVE || 0}</span>
-                </div>
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/10">
-                  <span className="whitespace-nowrap">Vô hiệu hóa</span>
-                  <span className="font-bold text-base">{stats.status_BANNED || 0}</span>
-                </div>
-                <div className="px-4 py-2.5 rounded-lg text-sm font-medium flex justify-between gap-4 items-center bg-yellow-50 text-yellow-700 border border-yellow-100 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/10">
-                  <span className="whitespace-nowrap">Chờ phê duyệt</span>
-                  <span className="font-bold text-base">{stats.status_CHECKPOINT || 0}</span>
-                </div>
-              </div>
-            </div>
+          {/* Driver Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Khách hàng</p>
+            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.role_DRIVER || 0}</h3>
+          </div>
 
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 w-full xl:w-fit xl:ml-auto ml-auto">
-              <div className="flex flex-wrap gap-3 items-center justify-start xl:justify-end">
-                <input 
-                  type="number" 
-                  placeholder="ID..."
-                  value={searchIdInput}
-                  onChange={(e) => setSearchIdInput(e.target.value)}
-                  className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-                <input 
-                  type="text" 
-                  placeholder="Từ khóa..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
+          {/* Active Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Hoạt động</p>
+            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.status_ACTIVE || 0}</h3>
+          </div>
+
+          {/* Banned Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Vô hiệu hóa</p>
+            <h3 className="text-2xl font-bold text-gray-500 dark:text-gray-400">{stats.status_BANNED || 0}</h3>
+          </div>
+
+          {/* Checkpoint Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Chờ phê duyệt</p>
+            <h3 className="text-2xl font-bold text-yellow-500 dark:text-yellow-400">{stats.status_CHECKPOINT || 0}</h3>
+          </div>
+        </div>
+
+        {/* Filter and Search Panel - Separated premium card */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+          <form onSubmit={handleSearch} className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Danh sách người dùng {isLoading && <span className="text-sm font-normal text-gray-400">(Đang tải...)</span>}
+              </h2>
+              <button 
+                type="button"
+                onClick={() => handleOpenModal()}
+                className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-semibold whitespace-nowrap cursor-pointer"
+              >
+                + Thêm người dùng
+              </button>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 items-center justify-start w-full">
+              <input 
+                type="number" 
+                placeholder="ID..."
+                value={searchIdInput}
+                onChange={(e) => setSearchIdInput(e.target.value)}
+                className="w-24 sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+              <input 
+                type="text" 
+                placeholder="Từ khóa..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-32 sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+              
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block"></div>
+              
+              <select
+                value={searchRole}
+                onChange={(e) => setSearchRole(e.target.value)}
+                className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">Tất cả vai trò</option>
+                {Object.entries(roles).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+              <select
+                value={searchStatus}
+                onChange={(e) => setSearchStatus(e.target.value)}
+                className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">Tất cả trạng thái</option>
+                {Object.entries(statuses).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+              
+              <div className="flex gap-2 lg:ml-auto">
                 <button 
                   type="submit" 
-                  className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-semibold cursor-pointer"
                 >
-                  Tìm
+                  Tìm Kiếm
                 </button>
-              </div>
-              <div className="flex flex-wrap gap-3 items-center justify-start">
-                <select
-                  value={searchRole}
-                  onChange={(e) => setSearchRole(e.target.value)}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">Tất cả vai trò</option>
-                  {Object.entries(roles).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-                <select
-                  value={searchStatus}
-                  onChange={(e) => setSearchStatus(e.target.value)}
-                  className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  {Object.entries(statuses).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
                 <button
                   type="button"
                   onClick={() => {
@@ -378,7 +388,7 @@ export default function UserManagement() {
                     setCurrentSearchStatus("");
                     setCurrentPage(0);
                   }}
-                  className="px-4 py-2 flex items-center justify-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 cursor-pointer"
                   title="Làm mới"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -386,8 +396,8 @@ export default function UserManagement() {
                   </svg>
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
 
         {error && (

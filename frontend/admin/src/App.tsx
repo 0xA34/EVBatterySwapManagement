@@ -12,10 +12,11 @@ import Home from "./pages/Dashboard/Home";
 import StationManagement from "./pages/EVBattery/StationManagement";
 import UserManagement from "./pages/EVBattery/UserManagement";
 import SubscriptionManagement from "./pages/EVBattery/SubscriptionManagement";
+import BatteryManagement from "./pages/EVBattery/BatteryManagement";
 import ReportsDashboard from "./pages/EVBattery/ReportsDashboard";
 import UserProfiles from "./pages/UserProfiles";
 import AccountSettings from "./pages/AccountSettings";
-import Support from "./pages/Support";
+import Support from "./pages/EVBattery/Support";
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/stations" element={<StationManagement />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/subscriptions" element={<SubscriptionManagement />} />
+              <Route path="/batteries" element={<BatteryManagement />} />
               <Route path="/reports" element={<ReportsDashboard />} />
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/account-settings" element={<AccountSettings />} />
