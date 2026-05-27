@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface StationRepository extends JpaRepository<Station, Integer> {
@@ -37,6 +36,5 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
     @Query("SELECT new com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse(s.status, COUNT(s)) " +
             "FROM Station s GROUP BY s.status")
     List<StationStatusCountResponse> countStationsByStatus();
-
 
 }

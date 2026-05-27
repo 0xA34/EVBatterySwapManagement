@@ -1,6 +1,8 @@
 package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.StationRequest;
+import com.team4tech.evbatteryswap.dto.response.DistrictStationCountResponse;
+import com.team4tech.evbatteryswap.dto.response.StationCountByProvinceResponse;
 import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Phuongxa;
 import com.team4tech.evbatteryswap.entity.Quanhuyen;
@@ -153,5 +155,6 @@ public class StationService implements IStationService {
 
         return finalResults;
     }
+
 
 }
