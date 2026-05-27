@@ -40,7 +40,7 @@ public class AdminBatteryController {
 
     @Operation(
         summary = "Liệt kê tất cả pin",
-        description = "Trả về danh sách pin được phân trang. Hỗ trợ lọc theo trạng thái, ID trạm và ID người dùng."
+        description = "Trả về danh sách pin được phân trang. Hỗ trợ lọc theo trạng thái, ID trạm, ID người dùng, từ khóa, và khoảng phần trăm sạc (ví dụ: 10-30, 30-50)."
     )
     @GetMapping
     public ResponseEntity<Page<BatteryResponse>> listBatteries(
@@ -48,10 +48,24 @@ public class AdminBatteryController {
             @RequestParam(defaultValue = "15") int size,
             @RequestParam(required = false)    String status,
             @RequestParam(required = false)    Integer stationId,
-            @RequestParam(required = false)    Integer userId
+            @RequestParam(required = false)    Integer userId,
+            @RequestParam(required = false)    String keyword,
+            @RequestParam(required = false)    String chargeRange
     ) {
+        java.math.BigDecimal minCharge = null;
+        java.math.BigDecimal maxCharge = null;
+        if (chargeRange != null && chargeRange.contains("-")) {
+            try {
+                String[] parts = chargeRange.split("-");
+                minCharge = new java.math.BigDecimal(parts[0].trim());
+                maxCharge = new java.math.BigDecimal(parts[1].trim());
+            } catch (Exception e) {
+                // Ignore parse errors, effectively no filter
+            }
+        }
+
         Page<BatteryResponse> result = batteryService
-                .findBatteries(status, stationId, userId,
+                .findBatteries(status, stationId, userId, keyword, minCharge, maxCharge,
                         PageRequest.of(page, size, Sort.by("createdAt").descending()))
                 .map(BatteryResponse::from);
         return ResponseEntity.ok(result);
@@ -67,22 +81,6 @@ public class AdminBatteryController {
                 .map(BatteryResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @Operation(
-        summary = "Tìm kiếm pin theo từ khóa",
-        description = "Tìm kiếm pin theo serial number, model hoặc trạng thái. Hỗ trợ phân trang."
-    )
-    @GetMapping("/search")
-    public ResponseEntity<Page<BatteryResponse>> searchBatteries(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "15") int size
-    ) {
-        Page<BatteryResponse> result = batteryService
-                .searchByKeyword(keyword, PageRequest.of(page, size, Sort.by("createdAt").descending()))
-                .map(BatteryResponse::from);
-        return ResponseEntity.ok(result);
     }
 
     @Operation(

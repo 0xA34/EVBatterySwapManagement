@@ -11,11 +11,9 @@ public interface IBatteryService {
 
     Page<Battery> findAll(Pageable pageable);
 
-    Page<Battery> findBatteries(String status, Integer stationId, Integer userId, Pageable pageable);
+    Page<Battery> findBatteries(String status, Integer stationId, Integer userId, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable);
 
     Optional<Battery> findById(int id);
-
-    Page<Battery> searchByKeyword(String keyword, Pageable pageable);
 
     Battery createBattery(BatteryRequest request);
 

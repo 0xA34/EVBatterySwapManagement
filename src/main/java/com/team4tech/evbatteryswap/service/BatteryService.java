@@ -30,20 +30,15 @@ public class BatteryService implements IBatteryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Battery> findBatteries(String status, Integer stationId, Integer userId, Pageable pageable) {
-        return batteryRepository.findBatteries(status, stationId, userId, pageable);
+    public Page<Battery> findBatteries(String status, Integer stationId, Integer userId, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable) {
+        String keywordFilter = (keyword == null || keyword.trim().isEmpty()) ? null : "%" + keyword.trim().toLowerCase() + "%";
+        return batteryRepository.findBatteries(status, stationId, userId, keywordFilter, minCharge, maxCharge, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Battery> findById(int id) {
         return batteryRepository.findById(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Battery> searchByKeyword(String keyword, Pageable pageable) {
-        return batteryRepository.searchByKeyword(keyword, pageable);
     }
 
     @Override
