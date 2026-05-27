@@ -156,16 +156,16 @@ public class AdminUserController {
         }
     }
 
-    @GetMapping("/countUserByStatus")
-    public List<UserStatusCountResponse> countUserByStatus() {
-
-        return userService.countUsersByStatus();
+    @GetMapping("/count")
+    public List<?> getCount(@RequestParam String type) {
+        if (type.equals("role")) {
+            List<UserRoleCountResponse> roleCount = userService.countUsersByRole();
+            return roleCount;
+        }  else if (type.equals("status")) {
+            List<UserStatusCountResponse> statusCount = userService.countUsersByStatus();
+            return statusCount;
+        } else return null;
     }
 
-    @GetMapping("/countUserByRole")
-    public List<UserRoleCountResponse> countUserByRole() {
-
-        return userService.countUsersByRole();
-    }
 
 }
