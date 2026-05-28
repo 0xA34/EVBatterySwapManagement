@@ -1,19 +1,26 @@
 package com.team4tech.evbatteryswap.controller.driver;
 
-
+import com.team4tech.evbatteryswap.dto.request.RentRequest;
 import com.team4tech.evbatteryswap.dto.request.SupportTicketRequest;
+import com.team4tech.evbatteryswap.dto.request.SwapRequest;
+import com.team4tech.evbatteryswap.dto.response.BatteryResponse;
 import com.team4tech.evbatteryswap.dto.response.SupportTicketResponse;
+import com.team4tech.evbatteryswap.dto.response.SwapResponse;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
+import com.team4tech.evbatteryswap.entity.Battery;
 import com.team4tech.evbatteryswap.entity.StationReview;
 import com.team4tech.evbatteryswap.entity.SupportTicket;
 import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
+import com.team4tech.evbatteryswap.service.BatterySwapService;
+import com.team4tech.evbatteryswap.service.BatteryService;
 import com.team4tech.evbatteryswap.service.StationReviewService;
 import com.team4tech.evbatteryswap.service.StationService;
 import com.team4tech.evbatteryswap.service.SupportTicketService;
 import com.team4tech.evbatteryswap.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -26,7 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -43,7 +50,8 @@ public class UserController {
     JwtAuthenticationFilter jwtAuthenticationFilter;
     JwtTokenProvider jwtTokenProvider;
     PasswordEncoder passwordEncoder;
-
+    BatterySwapService batterySwapService;
+    BatteryService batteryService;
 
     public boolean checkPassword(int id, String oldPassword) {
         // 1. Tìm mật khẩu đã mã hóa trong DB
@@ -187,6 +195,86 @@ public class UserController {
 
 
 
+    @Operation(
+            summary = "Thuê pin mới (dành cho tài xế mới)",
+            description = "Tài xế chưa có pin IN_USE có thể thuê pin đầu tiên tại một trạm. " +
+                          "Hệ thống sẽ tìm pin tốt nhất (giống swap), gán cho tài xế và tính SoH (ON_RENT)."
+    )
+    @PostMapping("/rent")
+    public ResponseEntity<?> rentBattery(
+            HttpServletRequest httpRequest,
+            @Valid @RequestBody RentRequest rentRequest
+    ) {
+        String token    = jwtAuthenticationFilter.extractJwtFromRequest(httpRequest);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        try {
+            BatteryResponse response = batterySwapService.rent(username, rentRequest);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
 
+    @Operation(
+            summary = "Yêu cầu đổi pin",
+            description = "Tài xế gửi yêu cầu đổi pin tại một trạm. " +
+                          "Hệ thống tự tìm pin tốt nhất tại trạm (AVAILABLE, đủ charge, SoH cao nhất), " +
+                          "tả pin cũ về trạm, tính lại SoH và ghi log."
+    )
+    @PostMapping("/swap")
+    public ResponseEntity<?> swapBattery(
+            HttpServletRequest httpRequest,
+            @Valid @RequestBody SwapRequest swapRequest
+    ) {
+        String token    = jwtAuthenticationFilter.extractJwtFromRequest(httpRequest);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        try {
+            SwapResponse response = batterySwapService.swap(username, swapRequest);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
+    @Operation(
+            summary = "Xem pin hiện tại của tôi",
+            description = "Trả về thông tin pin đang được gán cho tài xế (status = IN_USE). " +
+                          "Trả về 404 nếu tài xế chưa có pin."
+    )
+    @GetMapping("/my-battery")
+    public ResponseEntity<?> getMyBattery(HttpServletRequest httpRequest) {
+        String token    = jwtAuthenticationFilter.extractJwtFromRequest(httpRequest);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        try {
+            Battery battery = batterySwapService.getCurrentBattery(username);
+            return ResponseEntity.ok(BatteryResponse.from(battery));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
+    @Operation(
+            summary = "Xem danh sách pin khả dụng tại trạm",
+            description = "Trả về danh sách pin đang AVAILABLE tại một trạm cụ thể để tài xế có thể chọn."
+    )
+    @GetMapping("/stations/{id}/available-batteries")
+    public ResponseEntity<Page<BatteryResponse>> getAvailableBatteriesAtStation(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        Page<BatteryResponse> result = batteryService
+                .findBatteries("AVAILABLE", id, null, null, null, null, PageRequest.of(page, size))
+                .map(BatteryResponse::from);
+        return ResponseEntity.ok(result);
+    }
 
 }
