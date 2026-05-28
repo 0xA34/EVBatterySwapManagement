@@ -27,6 +27,7 @@ import java.util.Map;
 @RequestMapping("/api/admin/stations")
 @Tag(name = "Admin - Station Management", description = "CRUD operations for managing swap stations (Admin only)")
 @PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AdminStationController {
 
     private final StationService stationService;

@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
+import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,8 @@ public interface IUserService {
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
     Optional<User> findById(int id);
+    List<Station> findStationsByUserId(@Param("userId") Integer userId);
+
     Page<User> searchAndFilterUsers(
             @Param("keyword") String keyword,
             @Param("status") String status,

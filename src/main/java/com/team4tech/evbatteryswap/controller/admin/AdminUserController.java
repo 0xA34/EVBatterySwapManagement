@@ -5,7 +5,9 @@ import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.UserResponse;
 import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
+import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.User;
+import com.team4tech.evbatteryswap.service.StationService;
 import com.team4tech.evbatteryswap.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +32,11 @@ import java.util.Map;
 @RequestMapping("/api/admin/users")
 @Tag(name = "Admin - User Management", description = "CRUD operations for managing users (Admin only)")
 @PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AdminUserController {
 
     private final UserService userService;
+    private final StationService stationService;
 
 //    @Operation(
 //        summary = "Liệt kê tất cả người dùng",
@@ -129,10 +134,12 @@ public class AdminUserController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(
             @PathVariable int id,
-            @Valid @RequestBody UserOnChangeRequest request
+            @Valid @RequestBody UserOnChangeRequest request,
+            @RequestParam(required = false) List<Integer> stationIds
     ) {
         try {
             User updated = userService.updateUser(id, request);
+
             return ResponseEntity.ok(UserResponse.from(updated));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();

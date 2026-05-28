@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.repository;
 
 import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
+import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,5 +86,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.stations WHERE u.id = :id")
     Optional<User> findByIdWithStations(@Param("id") Integer id);
+
+    // Cách 1.1: Sử dụng tính năng Fetch Join để tránh lỗi LazyInitializationException
+    @Query("SELECT u.stations FROM User u WHERE u.id = :userId")
+    List<Station> findStationsByUserId(@Param("userId") Integer userId);
+
+
 
 }

@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.dto.request.UserOnChangeRequest;
 import com.team4tech.evbatteryswap.dto.request.UserRegisterRequest;
 import com.team4tech.evbatteryswap.dto.response.UserRoleCountResponse;
 import com.team4tech.evbatteryswap.dto.response.UserStatusCountResponse;
+import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.UserRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IUserService;
@@ -205,6 +206,12 @@ public class UserService implements IUserService {
             finalResults.add(new UserRoleCountResponse(role, count));
         }
         return finalResults;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Station> findStationsByUserId(@Param("userId") Integer userId) {
+        return userRepository.findStationsByUserId(userId);
     }
 
 

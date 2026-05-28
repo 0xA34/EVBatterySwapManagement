@@ -23,7 +23,7 @@ public class BatterySimulationScheduler {
     private final BatterySwapService batterySwapService;
     private final StationRepository stationRepository;
 
-    @Value("${simulation.enabled:true}")
+    @Value("${simulation.enabled:false}")
     private boolean simulationEnabled;
 
     @Value("${simulation.discharge.rate:30}")

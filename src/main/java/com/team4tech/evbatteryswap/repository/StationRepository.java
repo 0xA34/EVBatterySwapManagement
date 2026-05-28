@@ -11,9 +11,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StationRepository extends JpaRepository<Station, Integer> {
+
+
+    Optional<Station> findById(Integer id);
 
     @Query("SELECT s FROM Station s WHERE " +
             "(CAST(:keyword AS string) IS NULL OR " +
@@ -36,5 +40,8 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
     @Query("SELECT new com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse(s.status, COUNT(s)) " +
             "FROM Station s GROUP BY s.status")
     List<StationStatusCountResponse> countStationsByStatus();
+
+
+
 
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 @RequestMapping("/api/admin/batteries")
 @Tag(name = "Admin - Battery Management", description = "CRUD operations for managing batteries (Admin only)")
 @PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AdminBatteryController {
 
     private final BatteryService            batteryService;

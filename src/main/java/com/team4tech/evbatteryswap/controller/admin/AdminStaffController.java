@@ -28,6 +28,7 @@ import java.util.Map;
 @RequestMapping("/api/admin/staffs")
 @Tag(name = "Admin - Staff Management", description = "CRUD operations for managing staffs (Admin only)")
 @PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AdminStaffController {
     private final StaffService staffService;
 
