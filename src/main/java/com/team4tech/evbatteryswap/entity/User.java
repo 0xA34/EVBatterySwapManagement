@@ -9,6 +9,8 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -48,6 +50,14 @@ public class User {
     @ColumnDefault("0.00")
     @Column(name = "wallet_balance", precision = 12, scale = 2)
     private BigDecimal walletBalance;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_stations",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "station_id")
+    )
+    private List<Station> stations = new ArrayList<>();
 
     @Size(max = 255)
     @ColumnDefault("'DRIVER'")

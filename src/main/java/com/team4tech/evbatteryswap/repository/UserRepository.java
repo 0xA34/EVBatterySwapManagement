@@ -66,4 +66,24 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<UserRoleCountResponse> countUsersByRole();
 
 
+    // ====== Staff Management Queries ======
+
+    @Query("SELECT u FROM User u WHERE u.role = 'STAFF' AND " +
+            "(CAST(:keyword AS string) IS NULL OR " +
+            " LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) OR " +
+            " LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) OR " +
+            " LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) AND " +
+            "(:status IS NULL OR u.status = :status)")
+    Page<User> searchStaffs(
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    @Query("SELECT u FROM User u JOIN u.stations s WHERE u.role = 'STAFF' AND s.id = :stationId")
+    List<User> findStaffsByStationId(@Param("stationId") Integer stationId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.stations WHERE u.id = :id")
+    Optional<User> findByIdWithStations(@Param("id") Integer id);
+
 }
