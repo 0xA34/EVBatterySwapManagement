@@ -1,17 +1,13 @@
 package com.team4tech.evbatteryswap.controller.admin;
 
 import com.team4tech.evbatteryswap.dto.request.BatteryRequest;
-//import com.team4tech.evbatteryswap.dto.response.BatteryDiagnosticsResponse;
-// import com.team4tech.evbatteryswap.dto.response.BatteryLogResponse;
+import com.team4tech.evbatteryswap.dto.response.BatteryDiagnosticsResponse;
+import com.team4tech.evbatteryswap.dto.response.BatteryLogResponse;
 import com.team4tech.evbatteryswap.dto.response.BatteryResponse;
 import com.team4tech.evbatteryswap.entity.Battery;
-//import com.team4tech.evbatteryswap.dto.response.BatteryDiagnosticsResponse;
-// import com.team4tech.evbatteryswap.dto.response.BatteryLogResponse;
-import com.team4tech.evbatteryswap.dto.response.BatteryResponse;
-import com.team4tech.evbatteryswap.entity.Battery;
-//import com.team4tech.evbatteryswap.service.BatteryDiagnosticsService;
+import com.team4tech.evbatteryswap.service.BatteryDiagnosticsService;
 import com.team4tech.evbatteryswap.service.BatteryService;
-//import com.team4tech.evbatteryswap.service.BatterySwapService;
+import com.team4tech.evbatteryswap.service.BatterySwapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,8 +31,8 @@ import java.util.Map;
 public class AdminBatteryController {
 
     private final BatteryService            batteryService;
-//    private final BatteryDiagnosticsService diagnosticsService;
-//    private final BatterySwapService        batterySwapService;
+    private final BatteryDiagnosticsService diagnosticsService;
+    private final BatterySwapService        batterySwapService;
 
     @Operation(
         summary = "Liệt kê tất cả pin",
@@ -131,71 +127,71 @@ public class AdminBatteryController {
     }
 
 
-//    @Operation(
-//        summary = "Xem chẩn đoán SoH (live)",
-//        description = "Tính toán SoH và các thông số sức khỏe pin theo thời gian thực. "
-//                    + "KHÔNG ghi vào DB, không tạo log. Dùng để xem nhanh."
-//    )
-//    @GetMapping("/{id}/diagnostics")
-//    public ResponseEntity<?> getDiagnostics(@PathVariable int id) {
-//        try {
-//            BatteryDiagnosticsResponse resp = diagnosticsService.getDiagnostics(id);
-//            return ResponseEntity.ok(resp);
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
-//
-//    @Operation(
-//        summary = "Recalculate SoH và lưu log",
-//        description = "Tính lại SoH, cập nhật Battery.healthPercentage và ghi một BatteryLog mới. "
-//                    + "Dùng khi admin muốn cưỡng bức cập nhật SoH ngay lập tức."
-//    )
-//    @PostMapping("/{id}/recalculate-soh")
-//    public ResponseEntity<?> recalculateSoh(@PathVariable int id) {
-//        try {
-//            BatteryDiagnosticsResponse resp = diagnosticsService.recalculate(id, "MANUAL");
-//            return ResponseEntity.ok(resp);
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
-//
-//    @Operation(
-//        summary = "Xác nhận pin sạc đầy",
-//        description = "Staff/Admin dùng API này để xác nhận pin đang sạc (CHARGING) đã đầy. "
-//                    + "Sẽ tự động cập nhật status = AVAILABLE, chargeCycles + 1, "
-//                    + "tính lại SoH (ON_CHARGE_COMPLETE) và ghi log."
-//    )
-//    @PostMapping("/{id}/charge-complete")
-//    public ResponseEntity<?> markChargeComplete(@PathVariable int id) {
-//        try {
-//            BatteryDiagnosticsResponse resp = batterySwapService.markFullyCharged(id);
-//            return ResponseEntity.ok(resp);
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.notFound().build();
-//        } catch (IllegalStateException e) {
-//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-//        }
-//    }
-//
-//    @Operation(
-//        summary = "Lịch sử SoH của một pin",
-//        description = "Trả về danh sách các lần tính SoH của pin, sắp xếp từ mới nhất đến cũ nhất. Hỗ trợ phân trang."
-//    )
-//    @GetMapping("/{id}/logs")
-//    public ResponseEntity<?> getBatteryLogs(
-//            @PathVariable int id,
-//            @RequestParam(defaultValue = "0")  int page,
-//            @RequestParam(defaultValue = "20") int size
-//    ) {
-//        try {
-//            Page<BatteryLogResponse> result = diagnosticsService
-//                    .getHistory(id, PageRequest.of(page, size))
-//                    .map(BatteryLogResponse::from);
-//            return ResponseEntity.ok(result);
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
+    @Operation(
+        summary = "Xem chẩn đoán SoH (live)",
+        description = "Tính toán SoH và các thông số sức khỏe pin theo thời gian thực. "
+                    + "KHÔNG ghi vào DB, không tạo log. Dùng để xem nhanh."
+    )
+    @GetMapping("/{id}/diagnostics")
+    public ResponseEntity<?> getDiagnostics(@PathVariable int id) {
+        try {
+            BatteryDiagnosticsResponse resp = diagnosticsService.getDiagnostics(id);
+            return ResponseEntity.ok(resp);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(
+        summary = "Recalculate SoH và lưu log",
+        description = "Tính lại SoH, cập nhật Battery.healthPercentage và ghi một BatteryLog mới. "
+                    + "Dùng khi admin muốn cưỡng bức cập nhật SoH ngay lập tức."
+    )
+    @PostMapping("/{id}/recalculate-soh")
+    public ResponseEntity<?> recalculateSoh(@PathVariable int id) {
+        try {
+            BatteryDiagnosticsResponse resp = diagnosticsService.recalculate(id, "MANUAL");
+            return ResponseEntity.ok(resp);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(
+        summary = "Xác nhận pin sạc đầy",
+        description = "Staff/Admin dùng API này để xác nhận pin đang sạc (CHARGING) đã đầy. "
+                    + "Sẽ tự động cập nhật status = AVAILABLE, chargeCycles + 1, "
+                    + "tính lại SoH (ON_CHARGE_COMPLETE) và ghi log."
+    )
+    @PostMapping("/{id}/charge-complete")
+    public ResponseEntity<?> markChargeComplete(@PathVariable int id) {
+        try {
+            BatteryDiagnosticsResponse resp = batterySwapService.markFullyCharged(id);
+            return ResponseEntity.ok(resp);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @Operation(
+        summary = "Lịch sử SoH của một pin",
+        description = "Trả về danh sách các lần tính SoH của pin, sắp xếp từ mới nhất đến cũ nhất. Hỗ trợ phân trang."
+    )
+    @GetMapping("/{id}/logs")
+    public ResponseEntity<?> getBatteryLogs(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        try {
+            Page<BatteryLogResponse> result = diagnosticsService
+                    .getHistory(id, PageRequest.of(page, size))
+                    .map(BatteryLogResponse::from);
+            return ResponseEntity.ok(result);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
