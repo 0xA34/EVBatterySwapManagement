@@ -118,11 +118,4 @@ public class BatteryService implements IBatteryService {
             battery.setUser(null);
         }
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable) {
-        String keywordFilter = (keyword == null || keyword.trim().isEmpty()) ? null : "%" + keyword.trim().toLowerCase() + "%";
-        return batteryRepository.findBatteriesByStationIds(stationIds, status, keywordFilter, minCharge, maxCharge, pageable);
-    }
 }

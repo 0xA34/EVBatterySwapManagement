@@ -48,10 +48,11 @@ public class StaffBatteryController {
     JwtAuthenticationFilter jwtAuthenticationFilter;
     JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "Liệt kê pin thuộc các station của staff")
+    @Operation(summary = "Liệt kê pin thuộc một station cụ thể của staff")
     @GetMapping("/page")
-    public ResponseEntity<Page<BatteryResponse>> listBatteries(
+    public ResponseEntity<?> listBatteries(
             HttpServletRequest request,
+            @RequestParam int stationId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size,
             @RequestParam(required = false) String status,
@@ -59,8 +60,9 @@ public class StaffBatteryController {
             @RequestParam(required = false) String chargeRange
     ) {
         List<Integer> stationIds = getStaffStationIds(request);
-        if (stationIds.isEmpty()) {
-            return ResponseEntity.ok(Page.empty());
+        if (!stationIds.contains(stationId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Bạn không có quyền xem pin ở trạm này."));
         }
 
         java.math.BigDecimal minCharge = null;
@@ -75,7 +77,7 @@ public class StaffBatteryController {
         }
 
         Page<BatteryResponse> result = batteryService
-                .findBatteriesByStationIds(stationIds, status, keyword, minCharge, maxCharge,
+                .findBatteries(status, stationId, null, keyword, minCharge, maxCharge,
                         PageRequest.of(page, size, Sort.by("createdAt").descending()))
                 .map(BatteryResponse::from);
         return ResponseEntity.ok(result);

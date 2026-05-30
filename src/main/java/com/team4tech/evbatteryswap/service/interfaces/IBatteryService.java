@@ -21,6 +21,4 @@ public interface IBatteryService {
     Battery updateBattery(int id, BatteryRequest request);
 
     void deleteBattery(int id);
-
-    Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable);
 }
