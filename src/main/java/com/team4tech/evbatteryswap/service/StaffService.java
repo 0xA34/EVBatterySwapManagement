@@ -86,7 +86,8 @@ public class StaffService {
     }
 
     /**
-     * Cap nhat thong tin co ban cua staff (fullName, email, phone, password, status).
+     * Cap nhat thong tin co ban cua staff (fullName, email, phone, password,
+     * status).
      * Khong thay doi role va stations.
      */
     @Transactional
@@ -109,7 +110,8 @@ public class StaffService {
         staff.setFullName(request.fullName());
         staff.setEmail(request.email());
         staff.setPhoneNumber(request.phoneNumber());
-        if (request.status() != null) staff.setStatus(request.status());
+        if (request.status() != null)
+            staff.setStatus(request.status());
 
         // Chi cap nhat password neu duoc cung cap
         if (request.password() != null && !request.password().isBlank()) {

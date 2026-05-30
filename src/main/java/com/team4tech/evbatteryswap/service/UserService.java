@@ -29,7 +29,6 @@ public class UserService implements IUserService {
 
     private final PasswordEncoder passwordEncoder;
 
-
     @Override
     @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
@@ -42,13 +41,11 @@ public class UserService implements IUserService {
         return userRepository.findById(id);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -62,8 +59,7 @@ public class UserService implements IUserService {
             @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("role") String role,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         return userRepository.searchAndFilterUsers(keyword, status, role, pageable);
     }
 
@@ -110,8 +106,10 @@ public class UserService implements IUserService {
         user.setFullName(request.fullName());
         user.setEmail(request.email());
         user.setPhoneNumber(request.phoneNumber());
-        if (request.role() != null) user.setRole(request.role());
-        if (request.status() != null) user.setStatus(request.status());
+        if (request.role() != null)
+            user.setRole(request.role());
+        if (request.status() != null)
+            user.setStatus(request.status());
 
         // chi hash va cap nhat mat khau neu duoc cung cap
         if (request.password() != null && !request.password().isBlank()) {
@@ -132,7 +130,6 @@ public class UserService implements IUserService {
         userRepository.deleteById(id);
     }
 
-
     @Override
     public boolean updateEmail(@Param("id") int id, @Param("newEmail") String newEmail) {
         int rowsAffected = userRepository.updateEmail(id, newEmail);
@@ -141,17 +138,15 @@ public class UserService implements IUserService {
 
     @Override
     public boolean updatePhone(@Param("id") int id, @Param("newPhone") String newPhone) {
-        int rowsAffected =  userRepository.updatePhone(id, newPhone);
+        int rowsAffected = userRepository.updatePhone(id, newPhone);
         return rowsAffected > 0;
     }
-
 
     @Override
     public boolean updatePasswordById(@Param("id") int id, @Param("password") String newPassword) {
-        int rowsAffected =  userRepository.updatePasswordById(id, newPassword);
+        int rowsAffected = userRepository.updatePasswordById(id, newPassword);
         return rowsAffected > 0;
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -162,7 +157,8 @@ public class UserService implements IUserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserStatusCountResponse> countUsersByStatus() {
-        // 1. Lấy dữ liệu thực tế từ database (có thể thiếu nếu status đó chưa có user nào)
+        // 1. Lấy dữ liệu thực tế từ database (có thể thiếu nếu status đó chưa có user
+        // nào)
         List<UserStatusCountResponse> dbResults = userRepository.countUsersByStatus();
 
         // Chuyển danh sách từ DB thành Map để dễ tra cứu: Key là Status, Value là Count
@@ -197,7 +193,8 @@ public class UserService implements IUserService {
         // 2. Định nghĩa danh sách 3 role bắt buộc phải hiển thị
         List<String> allRoles = Arrays.asList("DRIVER", "ADMIN", "STAFF");
 
-        // 3. Tạo danh sách kết quả cuối cùng, điền số 0 nếu chưa có user nào thuộc role đó
+        // 3. Tạo danh sách kết quả cuối cùng, điền số 0 nếu chưa có user nào thuộc role
+        // đó
         List<UserRoleCountResponse> finalResults = new ArrayList<>();
 
         for (String role : allRoles) {
@@ -214,6 +211,4 @@ public class UserService implements IUserService {
         return userRepository.findStationsByUserId(userId);
     }
 
-
 }
-
