@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -14,6 +14,146 @@ type User = {
   role: string;
   status: string;
 };
+
+interface SearchableMultiSelectProps {
+  selectedIds: number[];
+  onChange: (ids: number[]) => void;
+  options: { id: number; name: string }[];
+  placeholder: string;
+}
+
+function SearchableMultiSelect({
+  selectedIds,
+  onChange,
+  options,
+  placeholder
+}: SearchableMultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSelect = (id: number) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter(item => item !== id));
+    } else {
+      onChange([...selectedIds, id]);
+    }
+  };
+
+  const handleRemove = (id: number) => {
+    onChange(selectedIds.filter(item => item !== id));
+  };
+
+  const filteredOptions = options.filter(opt =>
+    opt.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={dropdownRef} className="relative w-full">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-h-[42px] w-full flex flex-wrap gap-2 items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 focus-within:border-brand-500 focus-within:outline-none dark:border-gray-700 dark:bg-gray-800 cursor-pointer"
+      >
+        {selectedIds.length > 0 ? (
+          selectedIds.map(id => {
+            const opt = options.find(o => o.id === id);
+            if (!opt) return null;
+            return (
+              <span
+                key={id}
+                className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/10 dark:text-brand-400"
+              >
+                {opt.name}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(id);
+                  }}
+                  className="hover:text-brand-800 dark:hover:text-brand-300 font-bold focus:outline-none"
+                >
+                  &times;
+                </button>
+              </span>
+            );
+          })
+        ) : (
+          <span className="text-sm text-gray-400 dark:text-gray-500 select-none">
+            {placeholder}
+          </span>
+        )}
+        
+        <div className="ml-auto flex items-center pr-1 pointer-events-none">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-700 max-h-44 flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
+            <input
+              type="text"
+              placeholder="Gõ để tìm kiếm trạm..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <ul className="flex-1 overflow-y-auto py-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => {
+                const isSelected = selectedIds.includes(option.id);
+                return (
+                  <li
+                    key={option.id}
+                    onClick={() => handleSelect(option.id)}
+                    className={`px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center ${isSelected ? "bg-brand-50 dark:bg-brand-500/10 font-semibold text-brand-600 dark:text-brand-400" : ""}`}
+                  >
+                    <span>{option.name}</span>
+                    {isSelected && (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-brand-600 dark:text-brand-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                    )}
+                  </li>
+                );
+              })
+            ) : (
+              <li className="px-3 py-2.5 text-sm text-gray-400 dark:text-gray-500 text-center select-none">
+                Không tìm thấy trạm nào.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function UserManagement() {
   const { token } = useAuth();
@@ -37,6 +177,8 @@ export default function UserManagement() {
   const [roles, setRoles] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, string>>({});
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [activeStations, setActiveStations] = useState<{ id: number; name: string }[]>([]);
+  const [staffStationsMap, setStaffStationsMap] = useState<Record<number, string[]>>({});
 
   const [formData, setFormData] = useState({
     username: "",
@@ -45,7 +187,8 @@ export default function UserManagement() {
     phoneNumber: "",
     role: "DRIVER",
     status: "ACTIVE",
-    password: ""
+    password: "",
+    stationIds: [] as number[]
   });
 
   const fetchUsers = async (
@@ -164,8 +307,76 @@ export default function UserManagement() {
       .then(res => res.json())
       .then(data => setStatuses(data))
       .catch(err => console.error("Lỗi khi tải danh sách trạng thái:", err));
+
+      const fetchStations = async () => {
+        try {
+          const countRes = await fetch("/api/admin/stations/statusCount", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          let activeSize = 21;
+          if (countRes.ok) {
+            const counts = await countRes.json();
+            const activeObj = counts.find((c: any) => c.status === "ACTIVE");
+            if (activeObj) {
+              activeSize = activeObj.count;
+            }
+          }
+
+          const stationsRes = await fetch(`/api/admin/stations?page=0&size=${activeSize}&status=ACTIVE`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (stationsRes.ok) {
+            const data = await stationsRes.json();
+            const list = data.content || data.data || [];
+            const mapped = list.map((item: any) => ({
+              id: item.id,
+              name: item.name
+            }));
+            setActiveStations(mapped);
+          }
+        } catch (err) {
+          console.error("Lỗi khi tải danh sách trạm hoạt động:", err);
+        }
+      };
+      fetchStations();
     }
   }, [token]);
+
+  useEffect(() => {
+    const fetchStaffStations = async () => {
+      const staffUsers = users.filter(u => u.role === "STAFF");
+      if (staffUsers.length === 0) return;
+
+      const newMap = { ...staffStationsMap };
+      let updated = false;
+
+      await Promise.all(
+        staffUsers.map(async (user) => {
+          if (newMap[user.id] !== undefined) return;
+          try {
+            const res = await fetch(`/api/admin/staffs/staffs/${user.id}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              newMap[user.id] = (data.stations || []).map((s: any) => s.name);
+              updated = true;
+            }
+          } catch (err) {
+            console.error("Lỗi khi tải trạm của staff:", err);
+          }
+        })
+      );
+
+      if (updated) {
+        setStaffStationsMap(newMap);
+      }
+    };
+
+    if (token && users.length > 0) {
+      fetchStaffStations();
+    }
+  }, [users, token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,8 +387,23 @@ export default function UserManagement() {
     setCurrentPage(0);
   };
 
-  const handleOpenModal = (user?: User) => {
+  const handleOpenModal = async (user?: User) => {
     if (user) {
+      let initialStationIds: number[] = [];
+      if (user.role === "STAFF") {
+        try {
+          const detailRes = await fetch(`/api/admin/staffs/staffs/${user.id}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (detailRes.ok) {
+            const staffDetail = await detailRes.json();
+            initialStationIds = (staffDetail.stations || []).map((s: any) => s.id);
+          }
+        } catch (err) {
+          console.error("Lỗi khi tải chi tiết nhân viên:", err);
+        }
+      }
+
       setEditingUser(user);
       setFormData({
         username: user.username,
@@ -186,7 +412,8 @@ export default function UserManagement() {
         phoneNumber: user.phoneNumber || "",
         role: user.role || "DRIVER",
         status: user.status || "ACTIVE",
-        password: ""
+        password: "",
+        stationIds: initialStationIds
       });
     } else {
       setEditingUser(null);
@@ -197,7 +424,8 @@ export default function UserManagement() {
         phoneNumber: "",
         role: "DRIVER",
         status: "ACTIVE",
-        password: ""
+        password: "",
+        stationIds: []
       });
     }
     setIsModalOpen(true);
@@ -210,36 +438,126 @@ export default function UserManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = editingUser 
-      ? `/api/admin/users/${editingUser.id}`
-      : `/api/admin/users`;
     
-    const method = editingUser ? "PUT" : "POST";
-
-    const payload = { ...formData };
     if (editingUser) {
-      delete (payload as any).username;
-    }
+      // UPDATE USER
+      const userUrl = `/api/admin/users/${editingUser.id}`;
+      const payload = { 
+        fullName: formData.fullName,
+        email: formData.email?.trim() ? formData.email.trim() : null,
+        phoneNumber: formData.phoneNumber?.trim() ? formData.phoneNumber.trim() : null,
+        role: formData.role,
+        status: formData.status,
+        password: formData.password || undefined
+      };
 
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(errData?.error || "Lỗi khi lưu người dùng");
+      try {
+        const response = await fetch(userUrl, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json().catch(() => null);
+          throw new Error(errData?.error || "Lỗi khi cập nhật người dùng");
+        }
+
+        // If the role is STAFF, we also update stations
+        if (formData.role === "STAFF") {
+          const stationRes = await fetch(`/api/admin/staffs/staffs/${editingUser.id}/stations`, {
+            method: "PUT",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ stationIds: formData.stationIds })
+          });
+          if (!stationRes.ok) {
+            const errData = await stationRes.json().catch(() => null);
+            throw new Error(errData?.error || "Lỗi khi cập nhật danh sách trạm quản lý");
+          }
+          
+          // Update local staffStationsMap immediately
+          const stationNames = activeStations
+            .filter(s => formData.stationIds.includes(s.id))
+            .map(s => s.name);
+          setStaffStationsMap(prev => ({
+            ...prev,
+            [editingUser.id]: stationNames
+          }));
+        } else {
+          // If the role was STAFF but changed to something else, clear their stations
+          if (editingUser.role === "STAFF") {
+            await fetch(`/api/admin/staffs/staffs/${editingUser.id}/stations`, {
+              method: "PUT",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ stationIds: [] })
+            });
+          }
+        }
+
+        handleCloseModal();
+        fetchUsers(currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus);
+      } catch (err: any) {
+        alert(err.message);
       }
-      
-      handleCloseModal();
-      fetchUsers(currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus);
-    } catch (err: any) {
-      alert(err.message);
+    } else {
+      // CREATE USER
+      try {
+        let response;
+        if (formData.role === "STAFF") {
+          response = await fetch("/api/admin/staffs/staffs", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              username: formData.username,
+              fullName: formData.fullName,
+              email: formData.email?.trim() ? formData.email.trim() : null,
+              phoneNumber: formData.phoneNumber?.trim() ? formData.phoneNumber.trim() : null,
+              password: formData.password,
+              status: formData.status,
+              stationIds: formData.stationIds
+            })
+          });
+        } else {
+          response = await fetch("/api/admin/users", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              username: formData.username,
+              fullName: formData.fullName,
+              email: formData.email?.trim() ? formData.email.trim() : null,
+              phoneNumber: formData.phoneNumber?.trim() ? formData.phoneNumber.trim() : null,
+              password: formData.password,
+              role: formData.role,
+              status: formData.status
+            })
+          });
+        }
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => null);
+          throw new Error(errData?.error || "Lỗi khi lưu người dùng");
+        }
+
+        handleCloseModal();
+        fetchUsers(currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus);
+      } catch (err: any) {
+        alert(err.message);
+      }
     }
   };
 
@@ -427,6 +745,9 @@ export default function UserManagement() {
                     Vai Trò
                   </th>
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    Trạm Quản Lý
+                  </th>
+                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
                     Trạng Thái
                   </th>
                   <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
@@ -456,6 +777,23 @@ export default function UserManagement() {
                         <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-800 dark:bg-purple-500/20 dark:text-purple-300">
                           Nhân viên trạm
                         </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      {user.role === "STAFF" ? (
+                        staffStationsMap[user.id] && staffStationsMap[user.id].length > 0 ? (
+                          <div className="flex flex-wrap gap-1 max-w-[200px] whitespace-normal">
+                            {staffStationsMap[user.id].map((name, idx) => (
+                              <span key={idx} className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">Chưa gán trạm</span>
+                        )
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600">-</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-sm">
@@ -650,6 +988,20 @@ export default function UserManagement() {
                   </select>
                 </div>
               </div>
+
+              {formData.role === "STAFF" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Trạm đổi pin quản lý
+                  </label>
+                  <SearchableMultiSelect
+                    selectedIds={formData.stationIds}
+                    onChange={(ids) => setFormData({ ...formData, stationIds: ids })}
+                    options={activeStations}
+                    placeholder="Tìm kiếm và chọn trạm..."
+                  />
+                </div>
+              )}
 
 
               <div className="pt-4 flex gap-3">
