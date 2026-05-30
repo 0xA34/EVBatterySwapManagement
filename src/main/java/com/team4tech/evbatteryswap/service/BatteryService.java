@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.BatteryRequest;
+import com.team4tech.evbatteryswap.dto.response.BatteryStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Battery;
 import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.User;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -118,4 +119,43 @@ public class BatteryService implements IBatteryService {
             battery.setUser(null);
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable) {
+        String keywordFilter = (keyword == null || keyword.trim().isEmpty()) ? null : "%" + keyword.trim().toLowerCase() + "%";
+        return batteryRepository.findBatteriesByStationIds(stationIds, status, keywordFilter, minCharge, maxCharge, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BatteryStatusCountResponse> countBatteryStatuses(Integer stationId) {
+
+        // 1. Lấy dữ liệu thực tế từ database (lúc này trả về thẳng List class DTO)
+        List<BatteryStatusCountResponse> dbResults = batteryRepository.countBatteryStatusesByStationId(stationId);
+
+        // Chuyển danh sách từ DB thành Map: Key là Status, Value là Count
+        Map<String, Long> dbResultMap = dbResults.stream()
+                .collect(Collectors.toMap(
+                        BatteryStatusCountResponse::getStatus,
+                        BatteryStatusCountResponse::getCount
+                ));
+
+        // 2. Định nghĩa danh sách 5 trạng thái bắt buộc phải hiển thị
+        List<String> allStatuses = Arrays.asList(
+                "AVAILABLE", "EMPTY", "RESERVED", "RENTED", "CHARGING"
+        );
+
+        // 3. Tạo danh sách kết quả cuối cùng, điền số 0 nếu chưa có pin nào
+        List<BatteryStatusCountResponse> finalResults = new ArrayList<>();
+
+        for (String status : allStatuses) {
+            long count = dbResultMap.getOrDefault(status, 0L);
+            finalResults.add(new BatteryStatusCountResponse(status, count));
+        }
+
+        return finalResults;
+    }
+
+
 }

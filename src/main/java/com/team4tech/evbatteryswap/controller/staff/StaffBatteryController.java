@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.dto.request.BatteryRequest;
 import com.team4tech.evbatteryswap.dto.response.BatteryDiagnosticsResponse;
 import com.team4tech.evbatteryswap.dto.response.BatteryLogResponse;
 import com.team4tech.evbatteryswap.dto.response.BatteryResponse;
+import com.team4tech.evbatteryswap.dto.response.BatteryStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Battery;
 import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
@@ -264,4 +265,21 @@ public class StaffBatteryController {
             throw new AccessDeniedException("Bạn không có quyền thao tác trên pin này.");
         }
     }
+
+    @GetMapping("/countStatus")
+    public ResponseEntity<?> countBatteryStatuses(
+            HttpServletRequest request,
+            @RequestParam Integer stationId
+    ) {
+        List<Integer> stationIds = getStaffStationIds(request);
+        if (!stationIds.contains(stationId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Bạn không có quyền xem dữ liệu ở trạm này."));
+        }
+
+        List<BatteryStatusCountResponse> result = batteryService.countBatteryStatuses(stationId);
+        return ResponseEntity.ok(result);
+    }
+
+
 }

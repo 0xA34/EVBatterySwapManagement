@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.repository;
 
+import com.team4tech.evbatteryswap.dto.response.BatteryStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.Battery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,4 +67,35 @@ public interface BatteryRepository extends JpaRepository<Battery, Integer> {
             @Param("minCharge") BigDecimal minCharge,
             Pageable pageable
     );
+
+    @Query("SELECT b FROM Battery b WHERE " +
+            "b.currentStation.id IN :stationIds AND " +
+            "(:status    IS NULL OR b.status = :status) AND " +
+            "(:keyword   IS NULL OR LOWER(b.serialNumber) LIKE :keyword OR " +
+            "                        LOWER(b.model)        LIKE :keyword OR " +
+            "                        LOWER(b.status)       LIKE :keyword) AND " +
+            "(:minCharge IS NULL OR b.currentChargePercentage >= :minCharge) AND " +
+            "(:maxCharge IS NULL OR b.currentChargePercentage <= :maxCharge)")
+    Page<Battery> findBatteriesByStationIds(
+            @Param("stationIds") List<Integer> stationIds,
+            @Param("status")     String status,
+            @Param("keyword")    String keyword,
+            @Param("minCharge")  BigDecimal minCharge,
+            @Param("maxCharge")  BigDecimal maxCharge,
+            Pageable pageable
+    );
+
+
+    /**
+     * Đếm số lượng pin theo từng trạng thái tại một trạm cụ thể.
+     */
+    @Query("SELECT new com.team4tech.evbatteryswap.dto.response.BatteryStatusCountResponse(b.status, COUNT(b.id)) " +
+            "FROM Battery b " +
+            "WHERE b.currentStation.id = :stationId " +
+            "  AND b.status IN ('AVAILABLE', 'EMPTY', 'RESERVED', 'RENTED', 'CHARGING') " +
+            "GROUP BY b.status")
+    List<BatteryStatusCountResponse> countBatteryStatusesByStationId(@Param("stationId") Integer stationId);
+
+
+
 }
