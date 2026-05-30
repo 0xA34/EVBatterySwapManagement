@@ -5,6 +5,7 @@ import com.team4tech.evbatteryswap.entity.Battery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IBatteryService {
@@ -20,4 +21,6 @@ public interface IBatteryService {
     Battery updateBattery(int id, BatteryRequest request);
 
     void deleteBattery(int id);
+
+    Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable);
 }
