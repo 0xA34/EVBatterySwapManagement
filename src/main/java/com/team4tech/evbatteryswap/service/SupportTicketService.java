@@ -31,6 +31,32 @@ public class SupportTicketService implements ISupportTicketService {
 
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<SupportTicket> findById(int id) {
+        return supportTicketRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SupportTicket> searchAndFilter(String status, String priority, Pageable pageable) {
+        return supportTicketRepository.searchAndFilter(status, priority, pageable);
+    }
+
+    @Override
+    @Transactional
+    public SupportTicket updateTicket(int ticketId, com.team4tech.evbatteryswap.dto.request.UpdateSupportTicketRequest request) {
+        SupportTicket supportTicket = supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new EntityNotFoundException("Support ticket not found with id: " + ticketId));
+
+        if (request.status() != null) supportTicket.setStatus(request.status());
+        if (request.priority() != null) supportTicket.setPriority(request.priority());
+        if (request.adminResponse() != null) supportTicket.setAdminResponse(request.adminResponse());
+        
+        supportTicket.setUpdatedAt(Instant.now());
+        return supportTicketRepository.save(supportTicket);
+    }
+
+    @Override
     @Transactional
     public Optional<SupportTicket> createSupportTicket(int userId, SupportTicketRequest supportTicketRequest) {
         SupportTicket supportTicket = new SupportTicket();

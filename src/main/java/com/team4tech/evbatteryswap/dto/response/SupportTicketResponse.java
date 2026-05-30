@@ -9,8 +9,11 @@ public record SupportTicketResponse(
         Integer id,
         String subject,
         String message,
+        Integer userId,
+        String username,
         String status,
         String priority,
+        String adminResponse,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -19,8 +22,11 @@ public record SupportTicketResponse(
                 supportTicket.getId(),
                 supportTicket.getSubject(),
                 supportTicket.getMessage(),
+                supportTicket.getUser() != null ? supportTicket.getUser().getId() : null,
+                supportTicket.getUser() != null ? supportTicket.getUser().getUsername() : null,
                 supportTicket.getStatus(),
                 supportTicket.getPriority(),
+                supportTicket.getAdminResponse(),
                 supportTicket.getCreatedAt(),
                 supportTicket.getUpdatedAt()
         );

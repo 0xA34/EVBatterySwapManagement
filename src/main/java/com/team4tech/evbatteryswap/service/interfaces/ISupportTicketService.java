@@ -10,5 +10,12 @@ import java.util.Optional;
 public interface ISupportTicketService {
 
     Page<SupportTicket> findByUserId(Integer userId, Pageable pageable);
+
+    Optional<SupportTicket> findById(int id);
+
+    Page<SupportTicket> searchAndFilter(String status, String priority, Pageable pageable);
+
+    SupportTicket updateTicket(int ticketId, com.team4tech.evbatteryswap.dto.request.UpdateSupportTicketRequest request);
+
     Optional<SupportTicket> createSupportTicket(int userId, SupportTicketRequest supportTicketRequest);
 }
