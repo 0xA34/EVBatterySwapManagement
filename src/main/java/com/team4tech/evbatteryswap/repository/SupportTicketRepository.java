@@ -18,12 +18,12 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, In
            "(:priority IS NULL OR t.priority = :priority)")
     Page<SupportTicket> searchAndFilter(@Param("status") String status, @Param("priority") String priority, Pageable pageable);
 
-    // Đếm số lượng ticket ĐÃ CÓ admin_response (Khác NULL và Khác rỗng)
-    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NOT NULL AND t.adminResponse != ''")
+    // Đếm số lượng ticket ĐÃ CÓ admin_response (Thực sự có chữ bên trong)
+    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NOT NULL AND TRIM(t.adminResponse) != ''")
     long countRespondedTickets();
 
-    // Đếm số lượng ticket CHƯA CÓ admin_response (Bị NULL hoặc Rỗng)
-    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NULL OR t.adminResponse = ''")
+    // Đếm số lượng ticket CHƯA CÓ admin_response (Bị NULL, Rỗng, hoặc chỉ chứa toàn dấu cách)
+    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NULL OR TRIM(t.adminResponse) = ''")
     long countUnrespondedTickets();
 
 }
