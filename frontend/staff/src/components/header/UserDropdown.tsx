@@ -83,8 +83,8 @@ export default function UserDropdown() {
 
           <button
             type="button"
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               setIsOpen(false);
               navigate("/login", { replace: true });
             }}

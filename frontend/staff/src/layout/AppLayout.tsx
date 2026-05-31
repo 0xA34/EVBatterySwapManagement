@@ -3,12 +3,14 @@ import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
+import GPSPrompt from "../components/common/GPSPrompt";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
     <div className="min-h-screen xl:flex">
+      <GPSPrompt />
       <div>
         <AppSidebar />
         <Backdrop />

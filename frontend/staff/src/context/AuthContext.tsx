@@ -13,7 +13,7 @@ interface AuthContextType {
   isAuthInitialized: boolean;
   user: User | null;
   login: (token: string, user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,21 +23,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthInitialized, setIsAuthInitialized] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem(STAFF_TOKEN_KEY);
-    const storedUser = localStorage.getItem(STAFF_USER_KEY);
+  const clearLocalAuthData = () => {
+    localStorage.removeItem(STAFF_TOKEN_KEY);
+    localStorage.removeItem(STAFF_USER_KEY);
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
-    if (storedToken && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser) as User);
-        setIsAuthenticated(true);
-      } catch {
-        localStorage.removeItem(STAFF_TOKEN_KEY);
-        localStorage.removeItem(STAFF_USER_KEY);
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    }
+  useEffect(() => {
+    // Xóa bỏ token và thông tin người dùng khỏi storage khi ứng dụng khởi động để luôn yêu cầu đăng nhập lại
+    clearLocalAuthData();
     setIsAuthInitialized(true);
   }, []);
 
@@ -48,11 +43,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    localStorage.removeItem(STAFF_TOKEN_KEY);
-    localStorage.removeItem(STAFF_USER_KEY);
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    const token = localStorage.getItem(STAFF_TOKEN_KEY);
+    if (token) {
+      try {
+        await fetch('http://localhost:8080/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Logout API failed:', error);
+      }
+    }
+    clearLocalAuthData();
   };
 
   return (

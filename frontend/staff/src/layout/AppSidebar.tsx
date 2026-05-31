@@ -24,6 +24,11 @@ const navItems: NavItem[] = [
     path: "/inventory",
   },
   {
+    icon: <GridIcon />,
+    name: "Quản lý trạm",
+    path: "/stations",
+  },
+  {
     icon: <TableIcon />,
     name: "Giao dịch đổi pin",
     path: "/swap",
@@ -33,6 +38,45 @@ const navItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
+
+  const [navItemsState, setNavItemsState] = useState<NavItem[]>(navItems);
+
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const token = localStorage.getItem("staff_auth_token");
+        if (!token) return;
+        const response = await fetch("http://localhost:8080/api/staff/stations", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "*/*",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const stationSubItems = [
+            { name: "Tất cả trạm", path: "/stations" },
+            ...data.map((station: any) => ({
+              name: station.name,
+              path: `/stations/${station.id}`,
+            })),
+          ];
+
+          setNavItemsState((prev) =>
+            prev.map((item) =>
+              item.name === "Quản lý trạm"
+                ? { ...item, subItems: stationSubItems }
+                : item
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch stations for sidebar", err);
+      }
+    };
+    fetchStations();
+  }, []);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -49,7 +93,7 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     let submenuMatched = false;
     ["main"].forEach((menuType) => {
-      const items = navItems;
+      const items = navItemsState;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -68,7 +112,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [location, isActive]);
+  }, [location, isActive, navItemsState]);
 
   useEffect(() => {
     if (openSubmenu !== null) {
@@ -283,7 +327,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(navItemsState, "main")}
             </div>
           </div>
         </nav>

@@ -83,13 +83,6 @@ export default function Login() {
           </div>
         )}
 
-        {/* Cập nhật lại thông tin test theo API curl */}
-        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-300">
-          <p className="font-semibold mb-1">Tài khoản Test:</p>
-          <p>Tên đăng nhập: <span className="font-mono">staff</span></p>
-          <p>Mật khẩu: <span className="font-mono">123456</span></p>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
