@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -40,6 +40,47 @@ export default function BatteryManagement() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBattery, setEditingBattery] = useState<Battery | null>(null);
+
+  // Column Visibility States
+  type ColumnKey = "serialNumber" | "model" | "charge" | "health" | "station" | "status" | "actions";
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
+    serialNumber: true,
+    model: true,
+    charge: true,
+    health: true,
+    station: true,
+    status: true,
+    actions: true,
+  });
+
+  const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
+  const columnDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target as Node)) {
+        setIsColumnDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const columnsList: { key: ColumnKey; label: string }[] = [
+    { key: "serialNumber", label: "Mã Pin (Serial)" },
+    { key: "model", label: "Loại Pin" },
+    { key: "charge", label: "Mức Điện Sạc (SoC)" },
+    { key: "health", label: "Sức Khỏe (SoH)" },
+    { key: "station", label: "Trạm Hiện Tại" },
+    { key: "status", label: "Trạng Thái" },
+    { key: "actions", label: "Hành Động" },
+  ];
+
+  const activeColumnsCount = Object.values(visibleColumns).filter(Boolean).length;
+
   const [formData, setFormData] = useState({
     serialNumber: "",
     model: "72V-20Ah",
@@ -390,7 +431,7 @@ export default function BatteryManagement() {
               <option value="60V-20Ah">60V - 20Ah</option>
               <option value="48V-20Ah">48V - 20Ah</option>
             </select>
-            <div className="flex gap-2">
+             <div className="flex gap-2">
               <button
                 type="submit"
                 className="flex-1 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-semibold cursor-pointer"
@@ -415,6 +456,81 @@ export default function BatteryManagement() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
               </button>
+
+              {/* Column Selector Dropdown */}
+              <div ref={columnDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
+                  className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg focus:outline-none px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer font-semibold"
+                >
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                  <span>Cột</span>
+                  <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isColumnDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isColumnDropdownOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg dark:bg-gray-800 dark:border-gray-700 p-3 space-y-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-1 px-1">
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                        Hiển thị cột
+                      </span>
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={activeColumnsCount === columnsList.length}
+                          ref={(input) => {
+                            if (input) {
+                              input.indeterminate = activeColumnsCount > 0 && activeColumnsCount < columnsList.length;
+                            }
+                          }}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setVisibleColumns({
+                              serialNumber: checked,
+                              model: checked,
+                              charge: checked,
+                              health: checked,
+                              station: checked,
+                              status: checked,
+                              actions: checked,
+                            });
+                          }}
+                          className="rounded text-brand-500 focus:ring-brand-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                          Tất cả
+                        </span>
+                      </label>
+                    </div>
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-60 overflow-y-auto">
+                      {columnsList.map((col) => (
+                        <label
+                          key={col.key}
+                          className="flex items-center gap-3 py-2 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg select-none"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[col.key]}
+                            onChange={() => setVisibleColumns(prev => ({
+                              ...prev,
+                              [col.key]: !prev[col.key]
+                            }))}
+                            className="rounded text-brand-500 focus:ring-brand-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                            {col.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </form>
@@ -426,70 +542,98 @@ export default function BatteryManagement() {
           <table className="w-full whitespace-nowrap text-sm">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50">
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Mã Pin (Serial)</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Loại Pin</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Mức Điện Sạc (SoC)</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Tình Trạng Sức Khỏe (SoH)</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Trạm Hiện Tại</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Trạng Thái</th>
-                <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Hành Động</th>
+                {visibleColumns.serialNumber && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Mã Pin (Serial)</th>
+                )}
+                {visibleColumns.model && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Loại Pin</th>
+                )}
+                {visibleColumns.charge && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Mức Điện Sạc (SoC)</th>
+                )}
+                {visibleColumns.health && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Tình Trạng Sức Khỏe (SoH)</th>
+                )}
+                {visibleColumns.station && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Trạm Hiện Tại</th>
+                )}
+                {visibleColumns.status && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Trạng Thái</th>
+                )}
+                {visibleColumns.actions && (
+                  <th className="px-5 py-4 text-left font-semibold text-gray-800 dark:text-white">Hành Động</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {batteries.map((battery) => (
                 <tr key={battery.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="px-5 py-4 font-semibold text-brand-500">{battery.serialNumber}</td>
-                  <td className="px-5 py-4 text-gray-800 dark:text-white font-medium">{battery.model}</td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            battery.currentChargePercentage > 50 ? "bg-green-500" : battery.currentChargePercentage > 20 ? "bg-yellow-500" : "bg-red-500"
-                          }`}
-                          style={{ width: `${battery.currentChargePercentage}%` }}
-                        ></div>
+                  {visibleColumns.serialNumber && (
+                    <td className="px-5 py-4 font-semibold text-brand-500">{battery.serialNumber}</td>
+                  )}
+                  {visibleColumns.model && (
+                    <td className="px-5 py-4 text-gray-800 dark:text-white font-medium">{battery.model}</td>
+                  )}
+                  {visibleColumns.charge && (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              battery.currentChargePercentage > 50 ? "bg-green-500" : battery.currentChargePercentage > 20 ? "bg-yellow-500" : "bg-red-500"
+                            }`}
+                            style={{ width: `${battery.currentChargePercentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">{battery.currentChargePercentage}%</span>
                       </div>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">{battery.currentChargePercentage}%</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span
-                      className={`font-semibold ${
-                        battery.healthPercentage > 90 ? "text-green-600" : battery.healthPercentage > 80 ? "text-yellow-600" : "text-red-500"
-                      }`}
-                    >
-                      {battery.healthPercentage}%
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-gray-500 dark:text-gray-400">
-                    {battery.currentStationName ? (
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{battery.currentStationName}</span>
-                    ) : (
-                      <span className="italic text-gray-400">Không có / Kho bảo dưỡng</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">{getStatusBadge(battery.status)}</td>
-                  <td className="px-5 py-4">
-                    <button
-                      onClick={() => handleOpenModal(battery)}
-                      className="text-brand-500 hover:text-brand-600 font-semibold mr-3 transition-colors cursor-pointer"
-                    >
-                      Chỉnh sửa
-                    </button>
-                    <button
-                      onClick={() => handleDelete(battery.id)}
-                      className="text-red-500 hover:text-red-700 font-semibold transition-colors cursor-pointer"
-                    >
-                      Xóa
-                    </button>
-                  </td>
+                    </td>
+                  )}
+                  {visibleColumns.health && (
+                    <td className="px-5 py-4">
+                      <span
+                        className={`font-semibold ${
+                          battery.healthPercentage > 90 ? "text-green-600" : battery.healthPercentage > 80 ? "text-yellow-600" : "text-red-500"
+                        }`}
+                      >
+                        {battery.healthPercentage}%
+                      </span>
+                    </td>
+                  )}
+                  {visibleColumns.station && (
+                    <td className="px-5 py-4 text-gray-500 dark:text-gray-400">
+                      {battery.currentStationName ? (
+                        <span className="font-medium text-gray-700 dark:text-gray-300">{battery.currentStationName}</span>
+                      ) : (
+                        <span className="italic text-gray-400">Không có / Kho bảo dưỡng</span>
+                      )}
+                    </td>
+                  )}
+                  {visibleColumns.status && (
+                    <td className="px-5 py-4">{getStatusBadge(battery.status)}</td>
+                  )}
+                  {visibleColumns.actions && (
+                    <td className="px-5 py-4">
+                      <button
+                        onClick={() => handleOpenModal(battery)}
+                        className="text-brand-500 hover:text-brand-600 font-semibold mr-3 transition-colors cursor-pointer"
+                      >
+                        Chỉnh sửa
+                      </button>
+                      <button
+                        onClick={() => handleDelete(battery.id)}
+                        className="text-red-500 hover:text-red-700 font-semibold transition-colors cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
 
               {batteries.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-gray-500">
+                  <td colSpan={activeColumnsCount} className="px-5 py-8 text-center text-gray-500">
                     Không tìm thấy dữ liệu pin tương thích trong hệ thống.
                   </td>
                 </tr>

@@ -178,6 +178,48 @@ export default function UserManagement() {
   const [statuses, setStatuses] = useState<Record<string, string>>({});
   const [stats, setStats] = useState<Record<string, number>>({});
   const [activeStations, setActiveStations] = useState<{ id: number; name: string }[]>([]);
+
+  // Column Visibility States
+  type ColumnKey = "id" | "fullName" | "email" | "phoneNumber" | "role" | "station" | "status" | "actions";
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
+    id: true,
+    fullName: true,
+    email: true,
+    phoneNumber: true,
+    role: true,
+    station: true,
+    status: true,
+    actions: true,
+  });
+
+  const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
+  const columnDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target as Node)) {
+        setIsColumnDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const columnsList: { key: ColumnKey; label: string }[] = [
+    { key: "id", label: "ID" },
+    { key: "fullName", label: "Họ Tên" },
+    { key: "email", label: "Email" },
+    { key: "phoneNumber", label: "Số Điện Thoại" },
+    { key: "role", label: "Vai Trò" },
+    { key: "station", label: "Trạm Quản Lý" },
+    { key: "status", label: "Trạng Thái" },
+    { key: "actions", label: "Hành Động" },
+  ];
+
+  const activeColumnsCount = Object.values(visibleColumns).filter(Boolean).length;
   const [staffStationsMap, setStaffStationsMap] = useState<Record<number, string[]>>({});
 
   const [formData, setFormData] = useState({
@@ -713,6 +755,82 @@ export default function UserManagement() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                   </svg>
                 </button>
+
+                {/* Column Selector Dropdown */}
+                <div ref={columnDropdownRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
+                    className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg focus:outline-none px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer font-semibold"
+                  >
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                    <span>Cột</span>
+                    <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isColumnDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {isColumnDropdownOpen && (
+                    <div className="absolute right-0 z-50 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg dark:bg-gray-800 dark:border-gray-700 p-3 space-y-2">
+                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-1 px-1">
+                        <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                          Hiển thị cột
+                        </span>
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={activeColumnsCount === columnsList.length}
+                            ref={(input) => {
+                              if (input) {
+                                input.indeterminate = activeColumnsCount > 0 && activeColumnsCount < columnsList.length;
+                              }
+                            }}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setVisibleColumns({
+                                id: checked,
+                                fullName: checked,
+                                email: checked,
+                                phoneNumber: checked,
+                                role: checked,
+                                station: checked,
+                                status: checked,
+                                actions: checked,
+                              });
+                            }}
+                            className="rounded text-brand-500 focus:ring-brand-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 w-3.5 h-3.5 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Tất cả
+                          </span>
+                        </label>
+                      </div>
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-60 overflow-y-auto">
+                        {columnsList.map((col) => (
+                          <label
+                            key={col.key}
+                            className="flex items-center gap-3 py-2 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={visibleColumns[col.key]}
+                              onChange={() => setVisibleColumns(prev => ({
+                                ...prev,
+                                [col.key]: !prev[col.key]
+                              }))}
+                              className="rounded text-brand-500 focus:ring-brand-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 w-4 h-4 cursor-pointer"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                              {col.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </form>
@@ -729,112 +847,144 @@ export default function UserManagement() {
             <table className="w-full whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50">
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white w-20">
-                    ID
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Họ Tên
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Email
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Số Điện Thoại
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Vai Trò
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Trạm Quản Lý
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Trạng Thái
-                  </th>
-                  <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                    Hành Động
-                  </th>
+                  {visibleColumns.id && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white w-20">
+                      ID
+                    </th>
+                  )}
+                  {visibleColumns.fullName && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Họ Tên
+                    </th>
+                  )}
+                  {visibleColumns.email && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Email
+                    </th>
+                  )}
+                  {visibleColumns.phoneNumber && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Số Điện Thoại
+                    </th>
+                  )}
+                  {visibleColumns.role && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Vai Trò
+                    </th>
+                  )}
+                  {visibleColumns.station && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Trạm Quản Lý
+                    </th>
+                  )}
+                  {visibleColumns.status && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Trạng Thái
+                    </th>
+                  )}
+                  {visibleColumns.actions && (
+                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                      Hành Động
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {users.map((user) => (
                   <tr key={user.id}>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 font-medium text-left">
-                      #{user.id}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{user.fullName || user.username}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.email || "-"}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.phoneNumber || "-"}</td>
-                    <td className="px-5 py-4 text-sm">
-                      {user.role === "DRIVER" ? (
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 dark:bg-blue-500/20 dark:text-blue-300">
-                          Khách hàng 
-                        </span>
-                      ) : user.role === "ADMIN" ? (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800 dark:bg-red-500/20 dark:text-red-300">
-                          Quản trị viên
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-800 dark:bg-purple-500/20 dark:text-purple-300">
-                          Nhân viên trạm
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm">
-                      {user.role === "STAFF" ? (
-                        staffStationsMap[user.id] && staffStationsMap[user.id].length > 0 ? (
-                          <div className="flex flex-wrap gap-1 max-w-[200px] whitespace-normal">
-                            {staffStationsMap[user.id].map((name, idx) => (
-                              <span key={idx} className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
-                                {name}
-                              </span>
-                            ))}
-                          </div>
+                    {visibleColumns.id && (
+                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 font-medium text-left">
+                        #{user.id}
+                      </td>
+                    )}
+                    {visibleColumns.fullName && (
+                      <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{user.fullName || user.username}</td>
+                    )}
+                    {visibleColumns.email && (
+                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.email || "-"}</td>
+                    )}
+                    {visibleColumns.phoneNumber && (
+                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.phoneNumber || "-"}</td>
+                    )}
+                    {visibleColumns.role && (
+                      <td className="px-5 py-4 text-sm">
+                        {user.role === "DRIVER" ? (
+                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 dark:bg-blue-500/20 dark:text-blue-300">
+                            Khách hàng 
+                          </span>
+                        ) : user.role === "ADMIN" ? (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800 dark:bg-red-500/20 dark:text-red-300">
+                            Quản trị viên
+                          </span>
                         ) : (
-                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">Chưa gán trạm</span>
-                        )
-                      ) : (
-                        <span className="text-gray-300 dark:text-gray-600">-</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm">
-                      {user.status === "ACTIVE" ? (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-500/20 dark:text-green-300">
-                          {statuses[user.status] || "Đang Hoạt Động"}
-                        </span>
-                      ) : (user.status === "BANNED" || user.status === "INACTIVE") ? (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800 dark:bg-red-500/20 dark:text-red-300">
-                          {statuses[user.status] || "Vô Hiệu Hóa"}
-                        </span>
-                      ) : (user.status === "CHECKPOINT" || user.status === "PENDING") ? (
-                        <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300">
-                          {statuses[user.status] || "Chờ Phê Duyệt"}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-800 dark:bg-gray-500/20 dark:text-gray-300">
-                          {statuses[user.status] || user.status}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm">
-                      <button 
-                        onClick={() => handleOpenModal(user)}
-                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 font-medium mr-3"
-                      >
-                        Chỉnh sửa
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
-                      >
-                        Xóa
-                      </button>
-                    </td>
+                          <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-800 dark:bg-purple-500/20 dark:text-purple-300">
+                            Nhân viên trạm
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.station && (
+                      <td className="px-5 py-4 text-sm">
+                        {user.role === "STAFF" ? (
+                          staffStationsMap[user.id] && staffStationsMap[user.id].length > 0 ? (
+                            <div className="flex flex-wrap gap-1 max-w-[200px] whitespace-normal">
+                              {staffStationsMap[user.id].map((name, idx) => (
+                                <span key={idx} className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500 text-xs italic">Chưa gán trạm</span>
+                          )
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600">-</span>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-5 py-4 text-sm">
+                        {user.status === "ACTIVE" ? (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-500/20 dark:text-green-300">
+                            {statuses[user.status] || "Đang Hoạt Động"}
+                          </span>
+                        ) : (user.status === "BANNED" || user.status === "INACTIVE") ? (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800 dark:bg-red-500/20 dark:text-red-300">
+                            {statuses[user.status] || "Vô Hiệu Hóa"}
+                          </span>
+                        ) : (user.status === "CHECKPOINT" || user.status === "PENDING") ? (
+                          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300">
+                            {statuses[user.status] || "Chờ Phê Duyệt"}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-800 dark:bg-gray-500/20 dark:text-gray-300">
+                            {statuses[user.status] || user.status}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.actions && (
+                      <td className="px-5 py-4 text-sm">
+                        <button 
+                          onClick={() => handleOpenModal(user)}
+                          className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 font-medium mr-3"
+                        >
+                          Chỉnh sửa
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(user.id)}
+                          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                        >
+                          Xóa
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
 
                 {users.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-gray-500">
+                    <td colSpan={activeColumnsCount} className="px-5 py-8 text-center text-gray-500">
                       Chưa có dữ liệu người dùng.
                     </td>
                   </tr>

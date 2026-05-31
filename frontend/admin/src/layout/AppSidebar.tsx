@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 import {
   BoxCubeIcon,
   ChevronDownIcon,
+  EnvelopeIcon,
   GridIcon,
   HorizontaLDots,
   PieChartIcon,
@@ -65,7 +67,7 @@ const evBatteryItems: NavItem[] = [
     path: "/reports",
   },
   {
-    icon: <UserCircleIcon />,
+    icon: <EnvelopeIcon />,
     name: "Hỗ Trợ",
     path: "/support",
   },
@@ -74,6 +76,42 @@ const evBatteryItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered } = useSidebar();
   const location = useLocation();
+  const { token } = useAuth();
+  const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch("/api/admin/support-tickets/countResponse", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          let count = 0;
+          if (data) {
+            if (data.Noreply !== undefined) count = data.Noreply;
+            else if (data.noreply !== undefined) count = data.noreply;
+            else {
+              const key = Object.keys(data).find(k => k.toLowerCase() === "noreply");
+              if (key) count = data[key];
+            }
+          }
+          setPendingTicketsCount(Number(count));
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải số lượng khiếu nại chưa xử lý:", err);
+      }
+    };
+
+    fetchPendingCount();
+    // Refresh count every 60 seconds
+    const interval = setInterval(fetchPendingCount, 60000);
+    return () => clearInterval(interval);
+  }, [token]);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others" | "evbattery";
@@ -187,16 +225,26 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 <span
-                  className={`menu-item-icon-size ${
+                  className={`menu-item-icon-size relative ${
                     isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
                   }`}
                 >
                   {nav.icon}
+                  {nav.path === "/support" && pendingTicketsCount > 0 && !isExpanded && !isHovered && !isMobileOpen && (
+                    <span className="absolute top-0.5 right-0.5 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-red-500 dark:ring-gray-900 animate-pulse" />
+                  )}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
+                  <span className="menu-item-text flex items-center justify-between w-full">
+                    <span>{nav.name}</span>
+                    {nav.path === "/support" && pendingTicketsCount > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full dark:bg-red-600 animate-pulse">
+                        {pendingTicketsCount}
+                      </span>
+                    )}
+                  </span>
                 )}
               </Link>
             )
