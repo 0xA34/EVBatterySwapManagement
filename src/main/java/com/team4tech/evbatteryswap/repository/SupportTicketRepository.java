@@ -17,4 +17,12 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, In
            "(:status IS NULL OR t.status = :status) AND " +
            "(:priority IS NULL OR t.priority = :priority)")
     Page<SupportTicket> searchAndFilter(@Param("status") String status, @Param("priority") String priority, Pageable pageable);
+
+    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NOT NULL")
+    long countRespondedTickets();
+
+    // Đếm số lượng ticket CHƯA CÓ admin_response
+    @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.adminResponse IS NULL")
+    long countUnrespondedTickets();
+
 }

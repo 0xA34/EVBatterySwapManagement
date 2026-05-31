@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -75,5 +77,20 @@ public class SupportTicketService implements ISupportTicketService {
         SupportTicket savedTicket = supportTicketRepository.save(supportTicket);
         return Optional.of(savedTicket);
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getTicketStats() {
+        long answeredCount = supportTicketRepository.countRespondedTickets();
+        long noreplyCount = supportTicketRepository.countUnrespondedTickets();
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("Answered", answeredCount);
+        stats.put("Noreply", noreplyCount);
+        return stats;
+    }
+
+
 
 }

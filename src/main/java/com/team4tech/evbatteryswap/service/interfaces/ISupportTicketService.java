@@ -5,6 +5,7 @@ import com.team4tech.evbatteryswap.entity.SupportTicket;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface ISupportTicketService {
@@ -18,4 +19,7 @@ public interface ISupportTicketService {
     SupportTicket updateTicket(int ticketId, com.team4tech.evbatteryswap.dto.request.UpdateSupportTicketRequest request);
 
     Optional<SupportTicket> createSupportTicket(int userId, SupportTicketRequest supportTicketRequest);
+
+    Map<String, Long> getTicketStats();
+
 }

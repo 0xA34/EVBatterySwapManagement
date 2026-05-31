@@ -69,4 +69,12 @@ public class AdminSupportTicketController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/countResponse")
+    public ResponseEntity<Map<String, Long>> getSupportTicketCount() {
+        return ResponseEntity.ok(supportTicketService.getTicketStats());
+    }
+
+
+
 }
