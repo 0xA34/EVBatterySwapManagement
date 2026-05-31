@@ -1,6 +1,7 @@
 package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.SupportTicketRequest;
+import com.team4tech.evbatteryswap.dto.response.TicketStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.SupportTicket;
 import com.team4tech.evbatteryswap.entity.User;
 import com.team4tech.evbatteryswap.repository.SupportTicketRepository;
@@ -14,9 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,6 +91,30 @@ public class SupportTicketService implements ISupportTicketService {
         return stats;
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketStatusCountResponse> countTicketsGroupByStatus() {
+        // 1. Lấy dữ liệu thực tế từ database (ví dụ DB lúc này chỉ toàn ticket OPEN, chưa có ticket nào CLOSE)
+        List<TicketStatusCountResponse> dbResults = supportTicketRepository.countTicketsGroupByStatus();
+
+        // Chuyển danh sách từ DB thành Map để dễ tra cứu: Key là Status, Value là Count
+        Map<String, Long> dbResultMap = dbResults.stream()
+                .collect(Collectors.toMap(TicketStatusCountResponse::getStatus, TicketStatusCountResponse::getCount));
+
+        // 2. Định nghĩa danh sách 2 trạng thái bắt buộc phải có
+        List<String> allStatuses = Arrays.asList("OPEN", "CLOSE");
+
+        // 3. Tạo danh sách kết quả cuối cùng
+        List<TicketStatusCountResponse> finalResults = new ArrayList<>();
+
+        for (String status : allStatuses) {
+            // Nếu DB có trạng thái này thì lấy số lượng từ DB, ngược lại thì gán bằng 0
+            long count = dbResultMap.getOrDefault(status, 0L);
+            finalResults.add(new TicketStatusCountResponse(status, count));
+        }
+        return finalResults;
+    }
 
 
 }

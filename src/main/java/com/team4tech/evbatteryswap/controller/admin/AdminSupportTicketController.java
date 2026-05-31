@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.controller.admin;
 
 import com.team4tech.evbatteryswap.dto.request.UpdateSupportTicketRequest;
 import com.team4tech.evbatteryswap.dto.response.SupportTicketResponse;
+import com.team4tech.evbatteryswap.dto.response.TicketStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.SupportTicket;
 import com.team4tech.evbatteryswap.service.interfaces.ISupportTicketService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -76,5 +79,17 @@ public class AdminSupportTicketController {
     }
 
 
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, String>> getListStatus() {
+        Map<String, String> statusMap = new LinkedHashMap<>();
+        statusMap.put("OPEN", "Hộp Thư Mở");
+        statusMap.put("CLOSE", "Hộp Thư Đóng");
+        return ResponseEntity.ok(statusMap);
+    }
+
+    @GetMapping("/countStatus")
+    public List<TicketStatusCountResponse> countTicketsGroupByStatus() {
+        return supportTicketService.countTicketsGroupByStatus();
+    }
 
 }

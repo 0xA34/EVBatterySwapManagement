@@ -1,10 +1,12 @@
 package com.team4tech.evbatteryswap.service.interfaces;
 
 import com.team4tech.evbatteryswap.dto.request.SupportTicketRequest;
+import com.team4tech.evbatteryswap.dto.response.TicketStatusCountResponse;
 import com.team4tech.evbatteryswap.entity.SupportTicket;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,5 +23,7 @@ public interface ISupportTicketService {
     Optional<SupportTicket> createSupportTicket(int userId, SupportTicketRequest supportTicketRequest);
 
     Map<String, Long> getTicketStats();
+
+    List<TicketStatusCountResponse> countTicketsGroupByStatus();
 
 }
