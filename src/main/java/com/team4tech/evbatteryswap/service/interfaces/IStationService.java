@@ -30,6 +30,8 @@ public interface IStationService {
 
     Station updateStation(int id, StationRequest request);
 
+    Station updateStationStatus(int id, String status);
+
     void deleteStation(int id);
 
     List<StationStatusCountResponse> countStationsByStatus();

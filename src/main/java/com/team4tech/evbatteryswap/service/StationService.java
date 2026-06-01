@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class StationService implements IStationService {
 
     private final StationRepository stationRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,6 +90,7 @@ public class StationService implements IStationService {
         Station station = stationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Station not found with id: " + id));
 
+        String oldStatus = station.getStatus();
         station.setName(request.name());
         station.setAddress(request.address());
         station.setStatus(request.status());
@@ -119,7 +121,31 @@ public class StationService implements IStationService {
 
         station.setUpdatedAt(Instant.now());
 
-        return stationRepository.save(station);
+        Station saved = stationRepository.save(station);
+
+        if (!oldStatus.equals(request.status())) {
+            notificationService.notifyStationStatusChange(saved, oldStatus, request.status());
+        }
+
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Station updateStationStatus(int id, String status) {
+        Station station = stationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Station not found with id: " + id));
+
+        String oldStatus = station.getStatus();
+        station.setStatus(status);
+        station.setUpdatedAt(Instant.now());
+        Station saved = stationRepository.save(station);
+
+        if (!oldStatus.equals(status)) {
+            notificationService.notifyStationStatusChange(saved, oldStatus, status);
+        }
+
+        return saved;
     }
 
     @Override

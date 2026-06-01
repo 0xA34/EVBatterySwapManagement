@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -35,6 +36,9 @@ public class BatteryDiagnosticsService {
     private final BatteryRepository        batteryRepository;
     private final BatteryLogRepository     batteryLogRepository;
     private final SohCalculationEngine     engine;
+    private final NotificationService      notificationService;
+
+    private static final BigDecimal SOH_ALERT_THRESHOLD = new BigDecimal("70.0");
 
     /**
      * Trả về chẩn đoán đầy đủ — KHÔNG ghi vào DB.
@@ -69,6 +73,10 @@ public class BatteryDiagnosticsService {
 
         log.info("[SoH] Battery#{} → SoH={} | Grade={} | RUL={} cycles | trigger={}",
                 batteryId, result.soh(), result.healthGrade(), result.rulCycles(), triggerSource);
+
+        if (result.soh().compareTo(SOH_ALERT_THRESHOLD) < 0) {
+            notificationService.notifyLowSoH(battery, result.soh());
+        }
 
         return BatteryDiagnosticsResponse.from(battery, result);
     }

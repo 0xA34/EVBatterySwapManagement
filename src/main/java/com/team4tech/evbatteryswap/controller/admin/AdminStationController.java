@@ -148,4 +148,25 @@ public class AdminStationController {
 
 
 
+    @Operation(
+        summary = "Đổi trạng thái trạm nhanh",
+        description = "Chỉ cần truyền ID và status mới (ACTIVE, MAINTENANCE, DEPLOYING, INACTIVE)."
+    )
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateStationStatus(
+            @PathVariable int id,
+            @RequestParam String status
+    ) {
+        List<String> validStatuses = List.of("ACTIVE", "MAINTENANCE", "DEPLOYING", "INACTIVE");
+        if (!validStatuses.contains(status.toUpperCase())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Status không hợp lệ. Chỉ chấp nhận: " + validStatuses));
+        }
+        try {
+            Station updated = stationService.updateStationStatus(id, status.toUpperCase());
+            return ResponseEntity.ok(StationResponse.from(updated));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

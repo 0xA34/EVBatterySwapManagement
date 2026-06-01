@@ -24,6 +24,7 @@ public class SupportTicketService implements ISupportTicketService {
 
     private final SupportTicketRepository supportTicketRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -75,6 +76,12 @@ public class SupportTicketService implements ISupportTicketService {
         supportTicket.setUpdatedAt(Instant.now());
         // SỬA Ở ĐÂY: Bọc đối tượng đã save vào Optional
         SupportTicket savedTicket = supportTicketRepository.save(supportTicket);
+
+        notificationService.notifyNewSupportTicket(
+                savedTicket.getSubject(),
+                user.getUsername()
+        );
+
         return Optional.of(savedTicket);
     }
 
