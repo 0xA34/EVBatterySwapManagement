@@ -203,7 +203,7 @@ export default function SignInForm() {
               Đăng Nhập
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Nhập tên đăng nhập và mật khẩu của bạn để truy cập hệ thống EV Admin!
+              Nhập tên đăng nhập và mật khẩu của bạn để truy cập hệ thống ChargeX Admin!
             </p>
           </div>
           <div>
@@ -250,7 +250,7 @@ export default function SignInForm() {
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin hoặc admin@evbattery.com" 
+                    placeholder="admin hoặc admin@chargex.com" 
                   />
                 </div>
                 <div>
@@ -358,7 +358,7 @@ export default function SignInForm() {
                       type="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="admin@evbattery.com"
+                      placeholder="admin@chargex.com"
                     />
                   </div>
 

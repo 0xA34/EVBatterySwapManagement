@@ -348,7 +348,7 @@ export default function BatteryManagement() {
   return (
     <>
       <PageMeta
-        title="Quản Lý Pin | EV Battery Swap"
+        title="Quản Lý Pin | ChargeX"
         description="Quản lý chi tiết danh sách pin, loại pin và trạng thái sạc trong hệ thống"
       />
       <PageBreadcrumb pageTitle="Quản Lý Pin" />

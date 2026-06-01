@@ -513,7 +513,7 @@ export default function StationManagement() {
   return (
     <>
       <PageMeta
-        title="Quản Lý Trạm Đổi Pin | EV Battery Swap"
+        title="Quản Lý Trạm Đổi Pin | ChargeX"
         description="Quản lý các trạm đổi pin, điều phối pin và xử lý khiếu nại"
       />
       <PageBreadcrumb pageTitle="Quản Lý Trạm Đổi Pin" />

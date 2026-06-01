@@ -24,8 +24,7 @@ public class IndexController {
     public ResponseEntity<Map<String, Object>> status() {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
-                "service", "EV Battery Swap Management API",
-                "timestamp", Instant.now().toString()
-        ));
+                "service", "ChargeX Management API",
+                "timestamp", Instant.now().toString()));
     }
 }

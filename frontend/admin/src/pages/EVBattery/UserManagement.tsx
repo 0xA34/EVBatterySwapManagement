@@ -628,7 +628,7 @@ export default function UserManagement() {
   return (
     <>
       <PageMeta
-        title="Quản Lý Người Dùng | EV Battery Swap"
+        title="Quản Lý Người Dùng | ChargeX"
         description="Quản lý khách hàng và phân quyền nhân viên trạm"
       />
       <PageBreadcrumb pageTitle="Quản Lý Người Dùng" />

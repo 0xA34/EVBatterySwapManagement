@@ -23,9 +23,9 @@ public class OpenApiConfig {
     public OpenAPI evBatterySwapOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("EV Battery Swap Management API")
+                        .title("ChargeX Management API")
                         .description("""
-                                REST API for the EV Battery Swap Management system.
+                                REST API for the ChargeX Management system.
                                 
                                 **Access to this documentation requires ADMIN privileges.**
                                 

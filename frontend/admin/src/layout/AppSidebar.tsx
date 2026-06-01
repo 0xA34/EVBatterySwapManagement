@@ -29,16 +29,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-const othersItems: NavItem[] = [
-  {
-    icon: <PlugInIcon />,
-    name: "Xác thực",
-    subItems: [
-      { name: "Đăng Nhập", path: "/signin", pro: false },
-      { name: "Đăng Ký", path: "/signup", pro: false },
-    ],
-  },
-];
+
 
 const evBatteryItems: NavItem[] = [
   {
@@ -114,7 +105,7 @@ const AppSidebar: React.FC = () => {
   }, [token]);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others" | "evbattery";
+    type: "main" | "evbattery";
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -129,14 +120,14 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     let submenuMatched = false;
-    ["main", "others", "evbattery"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : menuType === "evbattery" ? evBatteryItems : othersItems;
+    ["main", "evbattery"].forEach((menuType) => {
+      const items = menuType === "main" ? navItems : evBatteryItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
               setOpenSubmenu({
-                type: menuType as "main" | "others" | "evbattery",
+                type: menuType as "main" | "evbattery",
                 index,
               });
               submenuMatched = true;
@@ -163,7 +154,7 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: "main" | "others" | "evbattery") => {
+  const handleSubmenuToggle = (index: number, menuType: "main" | "evbattery") => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
@@ -176,7 +167,7 @@ const AppSidebar: React.FC = () => {
     });
   };
 
-  const renderMenuItems = (items: NavItem[], menuType: "main" | "others" | "evbattery") => (
+  const renderMenuItems = (items: NavItem[], menuType: "main" | "evbattery") => (
     <ul className="flex flex-col gap-4">
       {items.map((nav, index) => (
         <li key={nav.name}>
@@ -330,21 +321,21 @@ const AppSidebar: React.FC = () => {
         <Link to="/" className="flex items-center gap-2">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/20">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
+              <img
+                className="w-10 h-10 object-contain rounded-xl"
+                src="/images/favicon.ico"
+                alt="Logo"
+              />
               <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                EV <span className="text-brand-500">Admin</span>
+                ChargeX <span className="bg-linear-to-r from-[#00b0ff] to-[#00e676] bg-clip-text text-transparent">Admin</span>
               </span>
             </div>
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/20">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
+            <img
+              className="w-10 h-10 object-contain rounded-xl"
+              src="/images/favicon.ico"
+              alt="Logo"
+            />
           )}
         </Link>
       </div>
@@ -377,7 +368,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "EV Battery Swap"
+                  "ChargeX"
                 ) : (
                   <HorizontaLDots className="size-6" />
                 )}
@@ -385,22 +376,7 @@ const AppSidebar: React.FC = () => {
               {renderMenuItems(evBatteryItems, "evbattery")}
             </div>
 
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+
           </div>
         </nav>
       </div>

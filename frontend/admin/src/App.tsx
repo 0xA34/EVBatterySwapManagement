@@ -8,7 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthRoute from "./components/AuthRoute";
 import Home from "./pages/Dashboard/Home";
 
-// EV Battery Swap Pages
+// ChargeX Pages
 import StationManagement from "./pages/EVBattery/StationManagement";
 import UserManagement from "./pages/EVBattery/UserManagement";
 import SubscriptionManagement from "./pages/EVBattery/SubscriptionManagement";
@@ -29,13 +29,15 @@ export default function App() {
             <Route path="/signup" element={<SignUp />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+          {/* Unprotected Dashboard Layout (Home Page only) */}
+          <Route element={<AppLayout />}>
+            <Route index path="/" element={<Home />} />
+          </Route>
 
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             {/* Dashboard Layout */}
             <Route element={<AppLayout />}>
-              <Route index path="/" element={<Home />} />
-
-              {/* EV Battery Swap */}
+              {/* ChargeX */}
               <Route path="/stations" element={<StationManagement />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/subscriptions" element={<SubscriptionManagement />} />

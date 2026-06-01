@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <>
       <PageMeta
-        title="Tổng Quan | EV Battery Swap Admin"
+        title="Tổng Quan | ChargeX Admin"
         description="Bảng điều khiển trung tâm cho hệ thống quản lý trạm đổi pin xe điện"
       />
       

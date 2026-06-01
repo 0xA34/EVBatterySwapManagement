@@ -48,7 +48,7 @@ export default function ReportsDashboard() {
   return (
     <>
       <PageMeta
-        title="Báo Cáo & Thống Kê | EV Battery Swap"
+        title="Báo Cáo & Thống Kê | ChargeX"
         description="Xem báo cáo doanh thu, tần suất đổi pin, AI dự báo nhu cầu"
       />
       <PageBreadcrumb pageTitle="Báo Cáo & Thống Kê" />

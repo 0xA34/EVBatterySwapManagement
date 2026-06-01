@@ -200,7 +200,7 @@ export default function SignUpForm() {
                     name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@evbattery.com"
+                    placeholder="admin@chargex.com"
                   />
                 </div>
                 {/* <!-- Password --> */}
@@ -347,7 +347,7 @@ export default function SignUpForm() {
                   1. Quyền hạn & Trách nhiệm của Tài khoản Admin
                 </h4>
                 <p className="leading-relaxed text-xs">
-                  Tài khoản Admin có quyền hạn truy cập cao nhất vào hệ thống EV Battery Swap. Người quản trị chịu hoàn toàn trách nhiệm bảo mật thông tin đăng nhập, không chia sẻ quyền truy cập cho bên thứ ba trái phép và đảm bảo vận hành các tác vụ hành chính đúng chuẩn mực.
+                  Tài khoản Admin có quyền hạn truy cập cao nhất vào hệ thống ChargeX. Người quản trị chịu hoàn toàn trách nhiệm bảo mật thông tin đăng nhập, không chia sẻ quyền truy cập cho bên thứ ba trái phép và đảm bảo vận hành các tác vụ hành chính đúng chuẩn mực.
                 </p>
               </section>
 
@@ -356,7 +356,7 @@ export default function SignUpForm() {
                   2. Bảo mật dữ liệu & Thông tin khách hàng
                 </h4>
                 <p className="leading-relaxed text-xs">
-                  Hệ thống EV Battery Swap cam kết bảo vệ toàn diện dữ liệu thông tin cá nhân của khách hàng, lịch sử thuê pin, doanh thu và sơ đồ phân bố trạm pin. Admin không được sử dụng dữ liệu này cho mục đích cá nhân hoặc thương mại ngoài phạm vi công việc.
+                  Hệ thống ChargeX cam kết bảo vệ toàn diện dữ liệu thông tin cá nhân của khách hàng, lịch sử thuê pin, doanh thu và sơ đồ phân bố trạm pin. Admin không được sử dụng dữ liệu này cho mục đích cá nhân hoặc thương mại ngoài phạm vi công việc.
                 </p>
               </section>
 

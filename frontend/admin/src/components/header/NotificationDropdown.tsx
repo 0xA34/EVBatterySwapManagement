@@ -1,77 +1,158 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { useAuth } from "../../context/AuthContext";
+import SockJS from "sockjs-client";
+import { Stomp, CompatClient } from "@stomp/stompjs";
 
-const notifications = [
-  {
-    id: 1,
-    title: "Cảnh báo thiếu pin",
-    description: "Trạm Thảo Điền chỉ còn 2 pin trống",
-    time: "5 phút trước",
-    type: "warning",
-    iconBg: "bg-yellow-100 dark:bg-yellow-500/20",
-    iconColor: "text-yellow-600 dark:text-yellow-400"
-  },
-  {
-    id: 2,
-    title: "Đăng ký gói mới",
-    description: "Trần Thị B vừa đăng ký gói Premium",
-    time: "15 phút trước",
-    type: "success",
-    iconBg: "bg-green-100 dark:bg-green-500/20",
-    iconColor: "text-green-600 dark:text-green-400"
-  },
-  {
-    id: 3,
-    title: "Hoàn tất bảo trì",
-    description: "Trạm Q3 - Võ Văn Tần đã trực tuyến trở lại",
-    time: "1 giờ trước",
-    type: "info",
-    iconBg: "bg-brand-100 dark:bg-brand-500/20",
-    iconColor: "text-brand-600 dark:text-brand-400"
-  },
-  {
-    id: 4,
-    title: "Lỗi kết nối",
-    description: "Mất tín hiệu với Trạm Q7 - Lotte Mart",
-    time: "2 giờ trước",
-    type: "error",
-    iconBg: "bg-red-100 dark:bg-red-500/20",
-    iconColor: "text-red-600 dark:text-red-400"
-  },
-  {
-    id: 5,
-    title: "Cập nhật phần mềm",
-    description: "Hệ thống quản lý đã cập nhật phiên bản v2.1",
-    time: "3 giờ trước",
-    type: "info",
-    iconBg: "bg-brand-100 dark:bg-brand-500/20",
-    iconColor: "text-brand-600 dark:text-brand-400"
-  },
-  {
-    id: 6,
-    title: "Vượt mức tải",
-    description: "Trạm Q1 - Nguyễn Huệ có quá nhiều lượt đổi trong 1 giờ qua",
-    time: "4 giờ trước",
-    type: "warning",
-    iconBg: "bg-yellow-100 dark:bg-yellow-500/20",
-    iconColor: "text-yellow-600 dark:text-yellow-400"
-  },
-  {
-    id: 7,
-    title: "Khách hàng hủy gói",
-    description: "Lê Văn C đã hủy gia hạn gói Cơ bản",
-    time: "Hôm qua",
-    type: "error",
-    iconBg: "bg-red-100 dark:bg-red-500/20",
-    iconColor: "text-red-600 dark:text-red-400"
+const getNotificationType = (type: string) => {
+  if (!type) return "info";
+  const t = type.toLowerCase();
+  if (t.includes("warning")) return "warning";
+  if (t.includes("success")) return "success";
+  if (t.includes("error")) return "error";
+  if (t.includes("status") || t.includes("change")) return "info";
+  return "info";
+};
+
+const getIconBg = (type: string) => {
+  const t = getNotificationType(type);
+  switch (t) {
+    case "warning": return "bg-yellow-100 dark:bg-yellow-500/20";
+    case "success": return "bg-green-100 dark:bg-green-500/20";
+    case "error": return "bg-red-100 dark:bg-red-500/20";
+    default: return "bg-brand-100 dark:bg-brand-500/20";
   }
-];
+};
+
+const getIconColor = (type: string) => {
+  const t = getNotificationType(type);
+  switch (t) {
+    case "warning": return "text-yellow-600 dark:text-yellow-400";
+    case "success": return "text-green-600 dark:text-green-400";
+    case "error": return "text-red-600 dark:text-red-400";
+    default: return "text-brand-600 dark:text-brand-400";
+  }
+};
+
+const formatTime = (dateStr: string) => {
+  if (!dateStr) return "Vừa xong";
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMin / 60);
+
+    if (diffMin < 1) return "Vừa xong";
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "Vừa xong";
+  }
+};
+
+// Global state for WebSocket singleton to persist session across mounts/navigating
+let stompClient: CompatClient | null = null;
+let globalReconnectTimeout: any = null;
+let isConnecting = false;
+let currentToken: string | null = null;
+
+// Registry of active listeners from mounted instances
+const listeners = new Set<(notification: any) => void>();
+const unreadListeners = new Set<(updater: number | ((prev: number) => number)) => void>();
+
+const broadcastNotification = (notification: any) => {
+  listeners.forEach((listener) => listener(notification));
+};
+
+const broadcastUnreadIncrement = () => {
+  unreadListeners.forEach((listener) => listener((prev) => prev + 1));
+};
+
+const connectGlobalWebSocket = (token: string) => {
+  if (stompClient?.connected || isConnecting) return;
+  isConnecting = true;
+  currentToken = token;
+
+  console.log("Initializing persistent WebSocket session via SockJS...");
+  
+  const API_BASE = "http://localhost:8080";
+  const socket = new SockJS(`${API_BASE}/ws?token=${token}`);
+  stompClient = Stomp.over(socket);
+  
+  // Disable debug logs
+  stompClient.debug = () => {};
+
+  stompClient.connect(
+    { Authorization: 'Bearer ' + token },
+    () => {
+      isConnecting = false;
+      console.log('WebSocket CONNECTED!', 'success');
+
+      stompClient?.subscribe('/user/queue/notifications', (message: any) => {
+        try {
+          const notification = JSON.parse(message.body);
+          broadcastUnreadIncrement();
+          broadcastNotification(notification);
+        } catch (e) {
+          console.error("Failed to parse global WS message body:", e);
+        }
+      });
+    },
+    (error: any) => {
+      console.error("Persistent WebSocket encountered an error:", error);
+      isConnecting = false;
+      stompClient = null;
+      console.log("Persistent WebSocket closed. Reconnecting in 5s...");
+      if (currentToken) {
+        if (globalReconnectTimeout) clearTimeout(globalReconnectTimeout);
+        globalReconnectTimeout = setTimeout(() => {
+          if (currentToken) connectGlobalWebSocket(currentToken);
+        }, 5000);
+      }
+    }
+  );
+
+  socket.onclose = () => {
+    if (!isConnecting && currentToken && !stompClient?.connected) {
+       isConnecting = false;
+       stompClient = null;
+       console.log("Persistent WebSocket closed. Reconnecting in 5s...");
+       if (globalReconnectTimeout) clearTimeout(globalReconnectTimeout);
+       globalReconnectTimeout = setTimeout(() => {
+         if (currentToken) connectGlobalWebSocket(currentToken);
+       }, 5000);
+    }
+  };
+};
+
+const disconnectGlobalWebSocket = () => {
+  currentToken = null;
+  if (globalReconnectTimeout) {
+    clearTimeout(globalReconnectTimeout);
+    globalReconnectTimeout = null;
+  }
+  if (stompClient) {
+    stompClient.disconnect(() => {
+      console.log("Disconnected STOMP client");
+    });
+    stompClient = null;
+  }
+  isConnecting = false;
+};
 
 export default function NotificationDropdown() {
+  const { token } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifying, setNotifying] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -81,10 +162,117 @@ export default function NotificationDropdown() {
     setIsOpen(false);
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
     toggleDropdown();
-    setNotifying(false);
+    if (unreadCount > 0 && token) {
+      try {
+        const response = await fetch("/api/admin/notifications/read-all", {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          setUnreadCount(0);
+          setNotificationsList((prev) =>
+            prev.map((item) => ({ ...item, isRead: true }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to mark notifications as read:", err);
+      }
+    }
   };
+
+  useEffect(() => {
+    if (!token) {
+      setNotificationsList([]);
+      setUnreadCount(0);
+      disconnectGlobalWebSocket();
+      return;
+    }
+
+    // 1. Fetch unread count
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch("/api/admin/notifications/unread-count", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(Number(data.unreadCount || 0));
+        }
+      } catch (err) {
+        console.error("Failed to fetch unread count:", err);
+      }
+    };
+
+    // 2. Fetch notifications list
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch("/api/admin/notifications?page=0&size=15", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const list = data.content || [];
+          setNotificationsList(list.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            description: item.message || item.description,
+            time: formatTime(item.createdAt),
+            type: getNotificationType(item.type),
+            iconBg: getIconBg(item.type),
+            iconColor: getIconColor(item.type),
+            isRead: item.isRead,
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    };
+
+    fetchUnreadCount();
+    fetchNotifications();
+
+    // 3. Connect to the global WebSocket session singleton
+    connectGlobalWebSocket(token);
+
+    // 4. Register listeners for this mounted instance
+    const handleIncomingNotification = (notification: any) => {
+      const type = getNotificationType(notification.type);
+      setNotificationsList((prev) => [
+        {
+          id: notification.id || Date.now(),
+          title: notification.title,
+          description: notification.message || notification.description,
+          time: "Vừa xong",
+          type: type,
+          iconBg: getIconBg(type),
+          iconColor: getIconColor(type),
+          isRead: false,
+        },
+        ...prev
+      ]);
+    };
+
+    const handleUnreadCountChange = (updater: any) => {
+      setUnreadCount(updater);
+    };
+
+    listeners.add(handleIncomingNotification);
+    unreadListeners.add(handleUnreadCountChange);
+
+    return () => {
+      // Cleanup listeners when component unmounts (leaving WebSocket open in background)
+      listeners.delete(handleIncomingNotification);
+      unreadListeners.delete(handleUnreadCountChange);
+    };
+  }, [token]);
 
   const getIcon = (type: string) => {
     switch(type) {
@@ -122,11 +310,11 @@ export default function NotificationDropdown() {
         onClick={handleClick}
       >
         <span
-          className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
-            !notifying ? "hidden" : "flex"
+          className={`absolute -right-0.5 -top-0.5 z-10 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-[3px] text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900 ${
+            unreadCount === 0 ? "hidden" : "flex"
           }`}
         >
-          <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
+          {unreadCount > 99 ? "99+" : unreadCount}
         </span>
         <svg
           className="fill-current"
@@ -173,7 +361,7 @@ export default function NotificationDropdown() {
           </button>
         </div>
         <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-          {notifications.slice(0, showAll ? notifications.length : 4).map((item) => (
+          {notificationsList.slice(0, showAll ? notificationsList.length : 4).map((item) => (
             <li key={item.id}>
               <DropdownItem
                 onItemClick={closeDropdown}
@@ -183,12 +371,12 @@ export default function NotificationDropdown() {
                   {getIcon(item.type)}
                 </div>
 
-                <span className="block w-full">
+                <span className="block w-full text-left">
                   <span className="mb-1.5 block text-theme-sm space-x-1">
-                    <span className="font-semibold text-gray-800 dark:text-white">
+                    <span className={`text-gray-800 dark:text-white ${!item.isRead ? "font-bold text-gray-900" : "font-semibold"}`}>
                       {item.title}
                     </span>
-                    <span className="block text-gray-600 dark:text-gray-300 mt-0.5">
+                    <span className={`block mt-0.5 ${!item.isRead ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-300"}`}>
                       {item.description}
                     </span>
                   </span>
@@ -200,11 +388,19 @@ export default function NotificationDropdown() {
                     <span>{item.time}</span>
                   </span>
                 </span>
+                {!item.isRead && (
+                  <span className="h-2 w-2 rounded-full bg-brand-500 shrink-0 self-center" />
+                )}
               </DropdownItem>
             </li>
           ))}
+          {notificationsList.length === 0 && (
+            <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              Không có thông báo nào.
+            </div>
+          )}
         </ul>
-        {notifications.length > 4 && (
+        {notificationsList.length > 4 && (
           <button
             onClick={() => setShowAll(!showAll)}
             className="block w-full px-4 py-2 mt-3 text-sm font-medium text-center text-brand-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-brand-400 dark:hover:bg-gray-800 transition-colors"

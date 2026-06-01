@@ -100,7 +100,7 @@ export default function SubscriptionManagement() {
   return (
     <>
       <PageMeta
-        title="Quản Lý Gói Thuê Pin | EV Battery Swap"
+        title="Quản Lý Gói Thuê Pin | ChargeX"
         description="Tạo và quản lý các gói thuê pin cho khách hàng"
       />
       <PageBreadcrumb pageTitle="Quản Lý Gói Thuê Pin" />
