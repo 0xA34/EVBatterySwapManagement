@@ -51,6 +51,8 @@ public class NotificationService {
 
     public void notifyStationStatusChange(Station station, String oldStatus, String newStatus) {
         List<User> staffList = userRepository.findStaffsByStationId(station.getId());
+        List<User> admins = userRepository.searchAndFilterUsers(null, null, "ADMIN", Pageable.unpaged()).getContent();
+
         String title = "Trạm \"" + station.getName() + "\" đã đổi trạng thái";
         String message = "Trạm \"" + station.getName() + "\" tại " + station.getAddress()
                 + " đã chuyển từ " + oldStatus + " sang " + newStatus + ".";
@@ -58,18 +60,26 @@ public class NotificationService {
         for (User staff : staffList) {
             createAndSend(staff, title, message, "STATION_STATUS_CHANGE");
         }
+        for (User admin : admins) {
+            createAndSend(admin, title, message, "STATION_STATUS_CHANGE");
+        }
     }
 
     public void notifyLowSoH(Battery battery, java.math.BigDecimal soh) {
         if (battery.getCurrentStation() == null) return;
 
         List<User> staffList = userRepository.findStaffsByStationId(battery.getCurrentStation().getId());
+        List<User> admins = userRepository.searchAndFilterUsers(null, null, "ADMIN", Pageable.unpaged()).getContent();
         String title = "Pin " + battery.getSerialNumber() + " có SoH thấp";
         String message = "Pin " + battery.getSerialNumber() + " (Model: " + battery.getModel()
                 + ") hiện có SoH = " + soh + "%, đã dưới ngưỡng cho phép.";
 
         for (User staff : staffList) {
             createAndSend(staff, title, message, "BATTERY_LOW_SOH");
+        }
+
+        for (User admin : admins) {
+            createAndSend(admin, title, message, "STATION_STATUS_CHANGE");
         }
     }
 
