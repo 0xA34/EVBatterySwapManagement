@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.service;
 
+import com.team4tech.evbatteryswap.dto.request.CustomNotificationRequest;
 import com.team4tech.evbatteryswap.dto.response.NotificationResponse;
 import com.team4tech.evbatteryswap.entity.Battery;
 import com.team4tech.evbatteryswap.entity.Notification;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -124,5 +126,27 @@ public class NotificationService {
                     n.setIsRead(true);
                     notificationRepository.save(n);
                 });
+    }
+
+    public void sendCustomNotification(CustomNotificationRequest request, User sender) {
+        List<User> targetUsers = new ArrayList<>();
+        
+        switch (request.getTargetAudience()) {
+            case ALL_USERS -> targetUsers = userRepository.searchAndFilterUsers(null, "ACTIVE", null, Pageable.unpaged()).getContent();
+            case ALL_ADMINS -> targetUsers = userRepository.searchAndFilterUsers(null, "ACTIVE", "ADMIN", Pageable.unpaged()).getContent();
+            case ALL_STAFF -> targetUsers = userRepository.searchAndFilterUsers(null, "ACTIVE", "STAFF", Pageable.unpaged()).getContent();
+            case ALL_DRIVERS -> targetUsers = userRepository.searchAndFilterUsers(null, "ACTIVE", "DRIVER", Pageable.unpaged()).getContent();
+            case SPECIFIC_USERS -> {
+                if (request.getSpecificUserIds() != null && !request.getSpecificUserIds().isEmpty()) {
+                    targetUsers = userRepository.findAllById(request.getSpecificUserIds());
+                }
+            }
+        }
+        
+        for (User user : targetUsers) {
+            // Không gửi thông báo cho chính mình
+            if (user.getId().equals(sender.getId())) continue;
+            createAndSend(user, request.getTitle(), request.getMessage(), "CUSTOM_MESSAGE");
+        }
     }
 }

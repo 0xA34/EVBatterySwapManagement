@@ -1,4 +1,4 @@
-package com.team4tech.evbatteryswap.controller.admin;
+package com.team4tech.evbatteryswap.controller.driver;
 
 import com.team4tech.evbatteryswap.dto.response.NotificationResponse;
 import com.team4tech.evbatteryswap.entity.Notification;
@@ -24,12 +24,12 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/notifications")
-@Tag(name = "Admin - Notifications", description = "View and manage notifications for admin")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/driver/notifications")
+@Tag(name = "Driver - Notifications", description = "View and manage notifications for driver")
+@PreAuthorize("hasRole('DRIVER')")
 @CrossOrigin(origins = "http://localhost:5173")
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class AdminNotificationController {
+public class DriverNotificationController {
 
     NotificationService notificationService;
     UserService userService;
@@ -42,7 +42,7 @@ public class AdminNotificationController {
         return userService.findByUsername(username).get().getId();
     }
 
-    @Operation(summary = "Lấy danh sách thông báo của admin")
+    @Operation(summary = "Lấy danh sách thông báo của tài xế")
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getNotifications(
             HttpServletRequest request,
@@ -84,21 +84,5 @@ public class AdminNotificationController {
         Integer userId = getUserId(request);
         notificationService.markAllAsRead(userId);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Gửi thông báo tùy chỉnh cho nhóm người hoặc cá nhân")
-    @PostMapping("/custom")
-    public ResponseEntity<Map<String, String>> sendCustomNotification(
-            HttpServletRequest request,
-            @RequestBody @jakarta.validation.Valid com.team4tech.evbatteryswap.dto.request.CustomNotificationRequest payload
-    ) {
-        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
-        com.team4tech.evbatteryswap.entity.User sender = userService.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Sender not found"));
-        
-        notificationService.sendCustomNotification(payload, sender);
-        
-        return ResponseEntity.ok(Map.of("message", "Đã gửi thông báo thành công tới " + payload.getTargetAudience().name()));
     }
 }
