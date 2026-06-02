@@ -2,6 +2,7 @@ package com.team4tech.evbatteryswap.controller;
 
 import com.team4tech.evbatteryswap.dto.request.LoginRequest;
 import com.team4tech.evbatteryswap.dto.response.LoginResponse;
+import com.team4tech.evbatteryswap.security.ApiRateLimit;
 import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
 import com.team4tech.evbatteryswap.security.JwtTokenProvider;
 import com.team4tech.evbatteryswap.security.TokenBlacklistService;
@@ -37,6 +38,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
+    @ApiRateLimit(capacity = 5, minutes = 1)
     @Operation(
             summary = "Login",
             description = "Authenticate with username and password. Returns a Bearer JWT token. " +

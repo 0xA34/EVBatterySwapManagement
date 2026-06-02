@@ -75,7 +75,7 @@ public class SecurityConfig {
                     ).permitAll()
 
                     // Everything else requires authentication
-                    .anyRequest().permitAll()
+                    .anyRequest().authenticated()
             )
 
             // Register the authentication provider
