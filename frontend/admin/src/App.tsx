@@ -17,6 +17,7 @@ import ReportsDashboard from "./pages/EVBattery/ReportsDashboard";
 import UserProfiles from "./pages/UserProfiles";
 import AccountSettings from "./pages/AccountSettings";
 import Support from "./pages/EVBattery/Support";
+import GeneralNotifications from "./pages/EVBattery/GeneralNotifications";
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/account-settings" element={<AccountSettings />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/general-notifications" element={<GeneralNotifications />} />
             </Route>
           </Route>
 

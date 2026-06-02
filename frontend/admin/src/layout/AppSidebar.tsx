@@ -11,6 +11,7 @@ import {
   PieChartIcon,
   PlugInIcon,
   UserCircleIcon,
+  MegaphoneIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -61,6 +62,11 @@ const evBatteryItems: NavItem[] = [
     icon: <EnvelopeIcon />,
     name: "Hỗ Trợ",
     path: "/support",
+  },
+  {
+    icon: <MegaphoneIcon />,
+    name: "Thông Báo Chung",
+    path: "/general-notifications",
   },
 ];
 

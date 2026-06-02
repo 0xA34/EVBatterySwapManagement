@@ -4,6 +4,7 @@ import { ReactComponent as BoxIcon } from "./box.svg?react";
 import { ReactComponent as CheckCircleIcon } from "./check-circle.svg?react";
 import { ReactComponent as AlertIcon } from "./alert.svg?react";
 import { ReactComponent as InfoIcon } from "./info.svg?react";
+import { ReactComponent as MegaphoneIcon } from "./megaphone.svg?react";
 import { ReactComponent as ErrorIcon } from "./info-error.svg?react";
 import { ReactComponent as BoltIcon } from "./bolt.svg?react";
 import { ReactComponent as ArrowUpIcon } from "./arrow-up.svg?react";
@@ -58,6 +59,7 @@ import { ReactComponent as ErrorHexaIcon } from "./info-hexa.svg?react";
 export {
   ErrorHexaIcon,
   AlertHexaIcon,
+  MegaphoneIcon,
   MoreDotIcon,
   DownloadIcon,
   FileIcon,
