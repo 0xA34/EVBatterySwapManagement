@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.controller.admin;
 
+import com.team4tech.evbatteryswap.dto.request.CustomNotificationRequest;
 import com.team4tech.evbatteryswap.dto.response.NotificationResponse;
 import com.team4tech.evbatteryswap.entity.Notification;
 import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -90,7 +92,7 @@ public class AdminNotificationController {
     @PostMapping("/custom")
     public ResponseEntity<Map<String, String>> sendCustomNotification(
             HttpServletRequest request,
-            @RequestBody @jakarta.validation.Valid com.team4tech.evbatteryswap.dto.request.CustomNotificationRequest payload
+            @RequestBody @Valid CustomNotificationRequest payload
     ) {
         String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
         String username = jwtTokenProvider.getUsernameFromToken(token);
