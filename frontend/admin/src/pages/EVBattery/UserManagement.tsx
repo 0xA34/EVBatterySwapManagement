@@ -172,6 +172,9 @@ export default function UserManagement() {
   const [currentSearchRole, setCurrentSearchRole] = useState("");
   const [currentSearchStatus, setCurrentSearchStatus] = useState("");
 
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortDirection, setSortDirection] = useState("desc");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Record<string, string>>({});
@@ -180,13 +183,14 @@ export default function UserManagement() {
   const [activeStations, setActiveStations] = useState<{ id: number; name: string }[]>([]);
 
   // Column Visibility States
-  type ColumnKey = "id" | "fullName" | "email" | "phoneNumber" | "role" | "station" | "status" | "actions";
+  type ColumnKey = "id" | "fullName" | "email" | "phoneNumber" | "walletBalance" | "role" | "station" | "status" | "actions";
 
   const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
     id: true,
     fullName: true,
     email: true,
     phoneNumber: true,
+    walletBalance: true,
     role: true,
     station: true,
     status: true,
@@ -213,6 +217,7 @@ export default function UserManagement() {
     { key: "fullName", label: "Họ Tên" },
     { key: "email", label: "Email" },
     { key: "phoneNumber", label: "Số Điện Thoại" },
+    { key: "walletBalance", label: "Số Dư Ví" },
     { key: "role", label: "Vai Trò" },
     { key: "station", label: "Trạm Quản Lý" },
     { key: "status", label: "Trạng Thái" },
@@ -230,7 +235,8 @@ export default function UserManagement() {
     role: "DRIVER",
     status: "ACTIVE",
     password: "",
-    stationIds: [] as number[]
+    stationIds: [] as number[],
+    walletTopUpAmount: ""
   });
 
   const fetchUsers = async (
@@ -238,7 +244,9 @@ export default function UserManagement() {
     keyword: string = "",
     searchId: string = "",
     roleFilter: string = "",
-    statusFilter: string = ""
+    statusFilter: string = "",
+    field: string = sortField,
+    dir: string = sortDirection
   ) => {
     setIsLoading(true);
     setError("");
@@ -264,7 +272,7 @@ export default function UserManagement() {
         setTotalPages(1);
         setCurrentPage(0);
       } else {
-        let url = `/api/admin/users/getListUsers?page=${page}&size=${pageSize}`;
+        let url = `/api/admin/users/getListUsers?page=${page}&size=${pageSize}&sortField=${field}&sortDirection=${dir}`;
         if (keyword.trim()) {
           url += `&keyword=${encodeURIComponent(keyword.trim())}`;
         }
@@ -330,9 +338,17 @@ export default function UserManagement() {
 
   useEffect(() => {
     if (token) {
-      fetchUsers(currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus);
+      fetchUsers(currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus, sortField, sortDirection);
     }
-  }, [token, currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus, pageSize]);
+  }, [token, currentPage, currentKeyword, currentSearchId, currentSearchRole, currentSearchStatus, pageSize, sortField, sortDirection]);
+
+  const handleSort = (field: string) => {
+    const isAsc = sortField === field && sortDirection === "asc";
+    const newDir = isAsc ? "desc" : "asc";
+    setSortField(field);
+    setSortDirection(newDir);
+    setCurrentPage(0);
+  };
 
   useEffect(() => {
     if (token) {
@@ -455,7 +471,8 @@ export default function UserManagement() {
         role: user.role || "DRIVER",
         status: user.status || "ACTIVE",
         password: "",
-        stationIds: initialStationIds
+        stationIds: initialStationIds,
+        walletTopUpAmount: ""
       });
     } else {
       setEditingUser(null);
@@ -467,7 +484,8 @@ export default function UserManagement() {
         role: "DRIVER",
         status: "ACTIVE",
         password: "",
-        stationIds: []
+        stationIds: [],
+        walletTopUpAmount: ""
       });
     }
     setIsModalOpen(true);
@@ -481,6 +499,14 @@ export default function UserManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate top-up amount before doing anything else
+    if (editingUser && formData.walletTopUpAmount && !isNaN(Number(formData.walletTopUpAmount))) {
+      if (Number(formData.walletTopUpAmount) > 5000000) {
+        alert("Lỗi: Số tiền nạp tối đa cho một lần là 5.000.000 VNĐ.");
+        return;
+      }
+    }
+
     if (editingUser) {
       // UPDATE USER
       const userUrl = `/api/admin/users/${editingUser.id}`;
@@ -542,6 +568,29 @@ export default function UserManagement() {
               },
               body: JSON.stringify({ stationIds: [] })
             });
+          }
+        }
+
+        // TOP UP WALLET
+        if (formData.walletTopUpAmount && !isNaN(Number(formData.walletTopUpAmount))) {
+          const amount = Number(formData.walletTopUpAmount);
+          if (amount > 0) {
+            const topUpRes = await fetch("/api/wallet/top-up", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                userId: editingUser.id,
+                amount: amount,
+                description: "Admin nạp tiền"
+              })
+            });
+            if (!topUpRes.ok) {
+              const errData = await topUpRes.json().catch(() => null);
+              throw new Error(errData?.error || "Cập nhật tài khoản thành công nhưng lỗi khi nạp tiền vào ví!");
+            }
           }
         }
 
@@ -794,6 +843,7 @@ export default function UserManagement() {
                                 fullName: checked,
                                 email: checked,
                                 phoneNumber: checked,
+                                walletBalance: checked,
                                 role: checked,
                                 station: checked,
                                 status: checked,
@@ -848,42 +898,58 @@ export default function UserManagement() {
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50">
                   {visibleColumns.id && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white w-20">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white w-20">
                       ID
                     </th>
                   )}
                   {visibleColumns.fullName && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Họ Tên
                     </th>
                   )}
                   {visibleColumns.email && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Email
                     </th>
                   )}
                   {visibleColumns.phoneNumber && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Số Điện Thoại
                     </th>
                   )}
+                  {visibleColumns.walletBalance && (
+                    <th 
+                      className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-none"
+                      onClick={() => handleSort("walletBalance")}
+                      title="Sắp xếp theo số dư ví"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Số Dư Ví
+                        {sortField === "walletBalance" ? (
+                          <span className="text-brand-500 font-bold">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600">↕</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
                   {visibleColumns.role && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Vai Trò
                     </th>
                   )}
                   {visibleColumns.station && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Trạm Quản Lý
                     </th>
                   )}
                   {visibleColumns.status && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Trạng Thái
                     </th>
                   )}
                   {visibleColumns.actions && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white">
                       Hành Động
                     </th>
                   )}
@@ -893,21 +959,26 @@ export default function UserManagement() {
                 {users.map((user) => (
                   <tr key={user.id}>
                     {visibleColumns.id && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 font-medium text-left">
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 font-medium text-left">
                         #{user.id}
                       </td>
                     )}
                     {visibleColumns.fullName && (
-                      <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{user.fullName || user.username}</td>
+                      <td className="px-4 py-3 text-sm text-gray-800 dark:text-white font-medium">{user.fullName || user.username}</td>
                     )}
                     {visibleColumns.email && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.email || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email || "-"}</td>
                     )}
                     {visibleColumns.phoneNumber && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.phoneNumber || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.phoneNumber || "-"}</td>
+                    )}
+                    {visibleColumns.walletBalance && (
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(user.walletBalance || 0)}
+                      </td>
                     )}
                     {visibleColumns.role && (
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-4 py-3 text-sm">
                         {user.role === "DRIVER" ? (
                           <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 dark:bg-blue-500/20 dark:text-blue-300">
                             Khách hàng 
@@ -924,12 +995,12 @@ export default function UserManagement() {
                       </td>
                     )}
                     {visibleColumns.station && (
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-4 py-3 text-sm">
                         {user.role === "STAFF" ? (
                           staffStationsMap[user.id] && staffStationsMap[user.id].length > 0 ? (
-                            <div className="flex flex-wrap gap-1 max-w-[200px] whitespace-normal">
+                            <div className="flex flex-col items-start gap-1 max-w-[200px] whitespace-normal">
                               {staffStationsMap[user.id].map((name, idx) => (
-                                <span key={idx} className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+                                <span key={idx} className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 w-max">
                                   {name}
                                 </span>
                               ))}
@@ -943,7 +1014,7 @@ export default function UserManagement() {
                       </td>
                     )}
                     {visibleColumns.status && (
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-4 py-3 text-sm">
                         {user.status === "ACTIVE" ? (
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-500/20 dark:text-green-300">
                             {statuses[user.status] || "Đang Hoạt Động"}
@@ -964,7 +1035,7 @@ export default function UserManagement() {
                       </td>
                     )}
                     {visibleColumns.actions && (
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-4 py-3 text-sm">
                         <button 
                           onClick={() => handleOpenModal(user)}
                           className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 font-medium mr-3"
@@ -1150,6 +1221,27 @@ export default function UserManagement() {
                     options={activeStations}
                     placeholder="Tìm kiếm và chọn trạm..."
                   />
+                </div>
+              )}
+
+              {editingUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Nạp thêm tiền vào ví (VNĐ)
+                  </label>
+                  <input 
+                    type="text"
+                    value={formData.walletTopUpAmount ? Number(formData.walletTopUpAmount).toLocaleString('vi-VN') : ""}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\D/g, "");
+                      setFormData({...formData, walletTopUpAmount: rawValue});
+                    }}
+                    placeholder="Nhập số tiền muốn nạp (Tối đa 5.000.000đ)"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Chỉ nhập số (VD: 100000). Bỏ trống nếu không nạp.
+                  </p>
                 </div>
               )}
 
