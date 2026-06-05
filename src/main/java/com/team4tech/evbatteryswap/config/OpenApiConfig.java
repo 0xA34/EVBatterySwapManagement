@@ -7,15 +7,33 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springdoc.core.customizers.OperationCustomizer;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.media.StringSchema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configures Swagger UI with API metadata and a Bearer JWT security scheme.
- * The "Authorize" button in Swagger UI allows users to supply their token.
+ * Configures Swagger UI with API metadata, a Bearer JWT security scheme,
+ * and groups APIs into categories for better organization.
  */
 @Configuration
 public class OpenApiConfig {
+
+    @Bean
+    public OperationCustomizer customGlobalHeaders() {
+        return (operation, handlerMethod) -> {
+            Parameter deviceIdHeader = new Parameter()
+                    .in("header")
+                    .schema(new StringSchema()._default("swagger-device-123"))
+                    .name("X-Device-Id")
+                    .description("Device Fingerprint for Rate Limiting. Required for all /api/** endpoints.")
+                    .required(true);
+            operation.addParametersItem(deviceIdHeader);
+            return operation;
+        };
+    }
 
     private static final String SECURITY_SCHEME_NAME = "bearerAuth";
 
@@ -49,5 +67,45 @@ public class OpenApiConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .description("Paste your JWT token here (without the 'Bearer ' prefix)")));
+    }
+
+    @Bean
+    public GroupedOpenApi adminApi() {
+        return GroupedOpenApi.builder()
+                .group("1. Admin API")
+                .pathsToMatch("/api/admin/**", "/api/wallet/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi staffApi() {
+        return GroupedOpenApi.builder()
+                .group("2. Staff API")
+                .pathsToMatch("/api/staff/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi driverApi() {
+        return GroupedOpenApi.builder()
+                .group("3. Driver API")
+                .pathsToMatch("/api/driver/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi authApi() {
+        return GroupedOpenApi.builder()
+                .group("4. Auth API")
+                .pathsToMatch("/api/auth/**", "/api/public/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("5. All APIs")
+                .pathsToMatch("/**")
+                .build();
     }
 }
