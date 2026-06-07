@@ -1,0 +1,2 @@
+/* Clean up index.css, just import our style.css and standard stuff if needed */
+@import url('/assets/css/style.css');
