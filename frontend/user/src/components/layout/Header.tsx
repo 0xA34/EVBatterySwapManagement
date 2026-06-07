@@ -23,9 +23,27 @@ export default function Header() {
   const walletBalance = "500,000";
   const username = "User";
 
-  const handleLogout = (e: React.MouseEvent) => {
+  const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    // Call backend logout API (fire and forget)
+    const token = localStorage.getItem('user_token');
+    if (token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Lỗi khi gọi API đăng xuất:', err);
+      }
+    }
+
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user_token');
+    localStorage.removeItem('user_role');
     window.dispatchEvent(new Event('authChange'));
     setIsAvatarOpen(false);
     navigate('/');
