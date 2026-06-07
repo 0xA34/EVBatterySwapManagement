@@ -104,10 +104,17 @@ public class AdminUserController {
             @RequestParam(defaultValue = "15") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String role
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false, defaultValue = "createdAt") String sortField,
+            @RequestParam(required = false, defaultValue = "desc") String sortDirection
     ) {
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Order order = new Sort.Order(direction, sortField);
+        if ("walletBalance".equals(sortField)) {
+            order = direction == Sort.Direction.DESC ? order.nullsLast() : order.nullsFirst();
+        }
         Page<UserResponse> result = userService
-                .searchAndFilterUsers(keyword, status, role, PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .searchAndFilterUsers(keyword, status, role, PageRequest.of(page, size, Sort.by(order)))
                 .map(UserResponse::from);
         return ResponseEntity.ok(result);
     }

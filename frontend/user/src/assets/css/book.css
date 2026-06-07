@@ -1,0 +1,61 @@
+/* Override all custom arrow effects from main CSS */
+.schedule .field select.field-select,
+.schedule .contact-form select,
+.schedule .contact-form .field select {
+    background-image: none !important;
+    appearance: auto !important;
+    -webkit-appearance: menulist !important;
+    -moz-appearance: menulist !important;
+    padding-right: 16px !important;
+}
+
+.schedule .field select.field-select:focus,
+.schedule .contact-form select:focus,
+.schedule .contact-form .field select:focus {
+    background-image: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Hide any pseudo elements */
+.schedule .field::after,
+.schedule .field::before,
+.schedule .field:focus-within::after,
+.schedule .field:focus-within::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Fix text height for search selects */
+#tinhSelect,
+#huyenSelect,
+#xaSelect {
+    padding: 4px 8px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+}
+
+@media (max-width: 768px) {
+    .schedule-two-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.time-btn {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-btn:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+}
