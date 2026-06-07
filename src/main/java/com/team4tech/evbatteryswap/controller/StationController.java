@@ -22,7 +22,7 @@ public class StationController {
     public Page<Station> getStationPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer quan,
             @RequestParam(required = false) Integer province,
