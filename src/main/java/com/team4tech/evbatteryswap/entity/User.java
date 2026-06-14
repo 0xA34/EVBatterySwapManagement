@@ -75,4 +75,11 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @ColumnDefault("0")
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "lockout_until")
+    private Instant lockoutUntil;
+
 }

@@ -91,6 +91,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u.stations FROM User u WHERE u.id = :userId")
     List<Station> findStationsByUserId(@Param("userId") Integer userId);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.failedLoginAttempts = u.failedLoginAttempts + 1 WHERE u.username = :username")
+    void incrementFailedLoginAttempts(@Param("username") String username);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.lockoutUntil = :lockoutUntil WHERE u.username = :username")
+    void lockUser(@Param("username") String username, @Param("lockoutUntil") java.time.Instant lockoutUntil);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.failedLoginAttempts = 0, u.lockoutUntil = null WHERE u.username = :username")
+    void resetFailedLoginAttempts(@Param("username") String username);
 }

@@ -60,6 +60,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
 
         String baseIdentifier = getClientIdentifier(request);
+
         String cacheKey = baseIdentifier + ":GLOBAL";
         int capacity = globalCapacity;
         int minutes = globalMinutes;
@@ -114,10 +115,15 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             return jwtTokenProvider.getUsernameFromToken(token);
         }
         
+        String deviceId = request.getHeader("X-Device-Id");
+        if (StringUtils.hasText(deviceId)) {
+            return "DEVICE:" + deviceId;
+        }
+
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
-        return ip;
+        return "IP:" + ip;
     }
 }

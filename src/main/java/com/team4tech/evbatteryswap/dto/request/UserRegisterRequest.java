@@ -23,6 +23,7 @@ public record UserRegisterRequest(
 
         // Bat buoc khi tao user moi
         @NotBlank(message = "Mật khẩu là bắt buộc.")
+        @com.team4tech.evbatteryswap.security.validation.StrongPassword
         String password,
 
         String role,
