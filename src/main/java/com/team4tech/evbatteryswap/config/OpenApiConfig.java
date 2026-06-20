@@ -73,7 +73,7 @@ public class OpenApiConfig {
     public GroupedOpenApi adminApi() {
         return GroupedOpenApi.builder()
                 .group("1. Admin API")
-                .pathsToMatch("/api/admin/**", "/api/wallet/**")
+                .pathsToMatch("/api/admin/**", "/api/wallet/**", "/api/info")
                 .build();
     }
 
@@ -81,7 +81,7 @@ public class OpenApiConfig {
     public GroupedOpenApi staffApi() {
         return GroupedOpenApi.builder()
                 .group("2. Staff API")
-                .pathsToMatch("/api/staff/**")
+                .pathsToMatch("/api/staff/**", "/api/wallet/**", "/api/info")
                 .build();
     }
 
@@ -89,7 +89,7 @@ public class OpenApiConfig {
     public GroupedOpenApi driverApi() {
         return GroupedOpenApi.builder()
                 .group("3. Driver API")
-                .pathsToMatch("/api/driver/**")
+                .pathsToMatch("/api/driver/**", "/api/info")
                 .build();
     }
 

@@ -68,20 +68,7 @@ public class UserController {
     }
 
 
-    @Operation(
-            summary = "API lấy thông tin người dùng",
-            description = "Trả về danh sách thông tin người dùng - tài xế"
-    )
-    @GetMapping("/info")
-    public ResponseEntity<UserResponse> getInfo(HttpServletRequest request) {
-        String token = jwtAuthenticationFilter.extractJwtFromRequest(request);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
 
-        return userService.findByUsername(username)
-                .map(UserResponse::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
 
 
     @Operation(
