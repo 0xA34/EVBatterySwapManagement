@@ -86,15 +86,12 @@ public interface BatteryRepository extends JpaRepository<Battery, Integer> {
     );
 
 
-    /**
-     * Đếm số lượng pin theo từng trạng thái tại một trạm cụ thể.
-     */
-    @Query("SELECT new com.team4tech.evbatteryswap.dto.response.BatteryStatusCountResponse(b.status, COUNT(b.id)) " +
+    @Query("SELECT b.currentStation.id, b.status, COUNT(b.id) " +
             "FROM Battery b " +
-            "WHERE b.currentStation.id = :stationId " +
+            "WHERE b.currentStation.id IN :stationIds " +
             "  AND b.status IN ('AVAILABLE', 'EMPTY', 'RESERVED', 'RENTED', 'CHARGING') " +
-            "GROUP BY b.status")
-    List<BatteryStatusCountResponse> countBatteryStatusesByStationId(@Param("stationId") Integer stationId);
+            "GROUP BY b.currentStation.id, b.status")
+    List<Object[]> countBatteryStatusesByStationIds(@Param("stationIds") List<Integer> stationIds);
 
 
 

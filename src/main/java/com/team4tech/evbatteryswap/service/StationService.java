@@ -1,13 +1,12 @@
 package com.team4tech.evbatteryswap.service;
 
 import com.team4tech.evbatteryswap.dto.request.StationRequest;
-import com.team4tech.evbatteryswap.dto.response.DistrictStationCountResponse;
-import com.team4tech.evbatteryswap.dto.response.StationCountByProvinceResponse;
-import com.team4tech.evbatteryswap.dto.response.StationStatusCountResponse;
+import com.team4tech.evbatteryswap.dto.response.*;
 import com.team4tech.evbatteryswap.entity.Phuongxa;
 import com.team4tech.evbatteryswap.entity.Quanhuyen;
 import com.team4tech.evbatteryswap.entity.Station;
 import com.team4tech.evbatteryswap.entity.Tinhthanh;
+import com.team4tech.evbatteryswap.repository.BatteryRepository;
 import com.team4tech.evbatteryswap.repository.StationRepository;
 import com.team4tech.evbatteryswap.service.interfaces.IStationService;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +26,7 @@ import java.util.stream.Collectors;
 public class StationService implements IStationService {
 
     private final StationRepository stationRepository;
+    private  final BatteryRepository  batteryRepository;
     private final NotificationService notificationService;
 
     @Override
@@ -47,6 +47,74 @@ public class StationService implements IStationService {
     ) {
         return stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
     }
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<StationHomeResponse> findStationsWithKeywordHome(
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            @Param("quan") Integer quan,
+            @Param("province") Integer province,
+            @Param("phuongxa") Integer phuongxa,
+            Pageable pageable
+    ) {
+        // 1. Lấy danh sách trạm (phân trang bình thường)
+        Page<Station> stationPage = stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
+
+        // Nếu không có trạm nào thì trả về Page rỗng luôn
+        if (stationPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. Lấy tất cả ID của các trạm trong trang hiện tại
+        List<Integer> stationIds = stationPage.getContent().stream()
+                .map(Station::getId)
+                .collect(Collectors.toList());
+
+        // 3. Gọi DB 1 LẦN DUY NHẤT để lấy số lượng pin của TẤT CẢ các trạm này
+        List<Object[]> dbResults = batteryRepository.countBatteryStatusesByStationIds(stationIds);
+        // 4. Nhóm kết quả trả về thành Map<StationId, Map<Status, Count>> để dễ tra cứu
+        Map<Integer, Map<String, Long>> countMapByStation = new HashMap<>();
+        for (Integer id : stationIds) {
+            countMapByStation.put(id, new HashMap<>()); // Khởi tạo Map rỗng cho mỗi trạm
+        }
+
+        for (Object[] row : dbResults) {
+            Integer sId = (Integer) row[0];
+            String stat = (String) row[1];
+            Long count = (Long) row[2];
+            countMapByStation.get(sId).put(stat, count);
+        }
+
+        // 5. Các trạng thái bắt buộc phải hiển thị (giống logic bạn đã làm bên BatteryService)
+        List<String> allStatuses = Arrays.asList("AVAILABLE", "EMPTY", "RESERVED", "RENTED", "CHARGING");
+
+        // 6. Map dữ liệu Station thành StationWithBatteryInfoResponse
+        return stationPage.map(station -> {
+            Map<String, Long> statusMap = countMapByStation.get(station.getId());
+            List<BatteryStatusCountResponse> finalBatteryCounts = new ArrayList<>();
+
+            for (String stat : allStatuses) {
+                // Lấy số lượng, nếu không có thì mặc định là 0
+                long count = statusMap.getOrDefault(stat, 0L);
+                finalBatteryCounts.add(new BatteryStatusCountResponse(stat, count));
+            }
+
+            return new StationHomeResponse(station, finalBatteryCounts);
+        });
+    }
+
+
+
+
+
+
+
+
+
+
 
     @Override
     @Transactional(readOnly = true)

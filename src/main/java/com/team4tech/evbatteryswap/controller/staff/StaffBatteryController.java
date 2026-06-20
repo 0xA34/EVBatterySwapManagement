@@ -271,13 +271,13 @@ public class StaffBatteryController {
             HttpServletRequest request,
             @RequestParam Integer stationId
     ) {
-        List<Integer> stationIds = getStaffStationIds(request);
-        if (!stationIds.contains(stationId)) {
+        List<Integer> allowedStationIds = getStaffStationIds(request);
+
+        if (!allowedStationIds.contains(stationId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "Bạn không có quyền xem dữ liệu ở trạm này."));
         }
-
-        List<BatteryStatusCountResponse> result = batteryService.countBatteryStatuses(stationId);
+        List<BatteryStatusCountResponse> result = batteryService.countBatteryStatuses(List.of(stationId));
         return ResponseEntity.ok(result);
     }
 

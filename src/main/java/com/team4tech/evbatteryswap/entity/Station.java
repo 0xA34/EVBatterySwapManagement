@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -30,14 +31,17 @@ public class Station {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quan")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Quanhuyen quan;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "province")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Tinhthanh province;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phuongxa")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Phuongxa phuongxa;
 
     @NotNull

@@ -129,24 +129,21 @@ public class BatteryService implements IBatteryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BatteryStatusCountResponse> countBatteryStatuses(Integer stationId) {
+    public List<BatteryStatusCountResponse> countBatteryStatuses(List<Integer> stationIds) {
 
-        // 1. Lấy dữ liệu thực tế từ database (lúc này trả về thẳng List class DTO)
-        List<BatteryStatusCountResponse> dbResults = batteryRepository.countBatteryStatusesByStationId(stationId);
+        List<Object[]> dbResults = batteryRepository.countBatteryStatusesByStationIds(stationIds);
 
-        // Chuyển danh sách từ DB thành Map: Key là Status, Value là Count
         Map<String, Long> dbResultMap = dbResults.stream()
                 .collect(Collectors.toMap(
-                        BatteryStatusCountResponse::getStatus,
-                        BatteryStatusCountResponse::getCount
+                        row -> (String) row[1], // Vị trí 1 là status
+                        row -> (Long) row[2],   // Vị trí 2 là count
+                        Long::sum               // Cộng dồn số lượng nếu có nhiều trạm cùng trả về 1 trạng thái
                 ));
 
-        // 2. Định nghĩa danh sách 5 trạng thái bắt buộc phải hiển thị
         List<String> allStatuses = Arrays.asList(
                 "AVAILABLE", "EMPTY", "RESERVED", "RENTED", "CHARGING"
         );
 
-        // 3. Tạo danh sách kết quả cuối cùng, điền số 0 nếu chưa có pin nào
         List<BatteryStatusCountResponse> finalResults = new ArrayList<>();
 
         for (String status : allStatuses) {

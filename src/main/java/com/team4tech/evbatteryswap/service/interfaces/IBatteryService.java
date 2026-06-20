@@ -25,6 +25,6 @@ public interface IBatteryService {
 
     Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable);
 
-    List<BatteryStatusCountResponse> countBatteryStatuses(Integer stationId);
+    List<BatteryStatusCountResponse> countBatteryStatuses(List<Integer> stationIds);
 
 }
