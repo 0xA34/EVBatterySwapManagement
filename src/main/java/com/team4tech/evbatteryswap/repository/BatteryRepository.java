@@ -69,19 +69,11 @@ public interface BatteryRepository extends JpaRepository<Battery, Integer> {
     );
 
     @Query("SELECT b FROM Battery b WHERE " +
-            "b.currentStation.id IN :stationIds AND " +
-            "(:status    IS NULL OR b.status = :status) AND " +
-            "(:keyword   IS NULL OR LOWER(b.serialNumber) LIKE :keyword OR " +
-            "                        LOWER(b.model)        LIKE :keyword OR " +
-            "                        LOWER(b.status)       LIKE :keyword) AND " +
-            "(:minCharge IS NULL OR b.currentChargePercentage >= :minCharge) AND " +
-            "(:maxCharge IS NULL OR b.currentChargePercentage <= :maxCharge)")
-    Page<Battery> findBatteriesByStationIds(
-            @Param("stationIds") List<Integer> stationIds,
-            @Param("status")     String status,
-            @Param("keyword")    String keyword,
-            @Param("minCharge")  BigDecimal minCharge,
-            @Param("maxCharge")  BigDecimal maxCharge,
+            "b.currentStation.id = :stationId AND " +
+            "(:status IS NULL OR b.status = :status)")
+    Page<Battery> findBatteriesByStationId(
+            @Param("stationId") Integer stationId,
+            @Param("status")    String status,
             Pageable pageable
     );
 

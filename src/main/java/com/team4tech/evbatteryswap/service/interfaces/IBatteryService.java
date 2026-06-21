@@ -23,7 +23,7 @@ public interface IBatteryService {
 
     void deleteBattery(int id);
 
-    Page<Battery> findBatteriesByStationIds(List<Integer> stationIds, String status, String keyword, java.math.BigDecimal minCharge, java.math.BigDecimal maxCharge, Pageable pageable);
+    Page<Battery> findBatteriesByStationIds(int stationIds, String status, Pageable pageable);
 
     List<BatteryStatusCountResponse> countBatteryStatuses(List<Integer> stationIds);
 
