@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import { getApiUrl } from '../utils/api';
+import { BatteryTable } from '../components/station/BatteryTable';
 
 interface Station {
   id: number;
@@ -35,6 +36,9 @@ const BatteryInventory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [filterSoh, setFilterSoh] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
@@ -109,8 +113,25 @@ const BatteryInventory: React.FC = () => {
   }, [showToast]);
 
   const filteredBatteries = batteries.filter(b => {
-    if (filterStatus === 'ALL') return true;
-    return b.status === filterStatus;
+    let match = true;
+    if (filterStatus !== 'ALL' && b.status !== filterStatus) match = false;
+    
+    if (activeSearchQuery) {
+      const q = activeSearchQuery.toLowerCase();
+      if (!b.serialNumber.toLowerCase().includes(q) && !b.model.toLowerCase().includes(q)) {
+        match = false;
+      }
+    }
+
+    if (filterSoh !== 'ALL') {
+      const soh = b.healthPercentage;
+      if (filterSoh === '10-20' && (soh < 10 || soh >= 20)) match = false;
+      if (filterSoh === '20-50' && (soh < 20 || soh >= 50)) match = false;
+      if (filterSoh === '50-80' && (soh < 50 || soh >= 80)) match = false;
+      if (filterSoh === '80-100' && (soh < 80 || soh > 100)) match = false;
+    }
+
+    return match;
   });
 
   const totalElements = filteredBatteries.length;
@@ -177,139 +198,29 @@ const BatteryInventory: React.FC = () => {
         </div>
       </div>
 
-      {/* Danh sách Pin chi tiết */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4">
-          <h3 className="font-bold text-lg text-gray-800 dark:text-white">Chi tiết từng viên pin</h3>
-          <div className="flex gap-2">
-             <select 
-               value={filterStatus}
-               onChange={(e) => {
-                 setFilterStatus(e.target.value);
-                 setCurrentPage(0);
-               }}
-               className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-xl p-2.5 outline-none"
-             >
-                <option value="ALL">Tất cả tình trạng</option>
-                <option value="AVAILABLE">Sẵn sàng</option>
-                <option value="CHARGING">Đang sạc</option>
-                <option value="MAINTENANCE">Bảo dưỡng</option>
-             </select>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-12 text-center text-gray-500">
-              <svg className="animate-spin w-8 h-8 mx-auto mb-3 text-blue-500" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              <span>Đang tải danh sách tồn kho pin...</span>
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center text-red-500 font-medium">{error}</div>
-          ) : (
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3.5">Mã Pin (ID)</th>
-                  <th scope="col" className="px-6 py-3.5">Số Serial</th>
-                  <th scope="col" className="px-6 py-3.5">Model tương thích</th>
-                  <th scope="col" className="px-6 py-3.5">Dung lượng</th>
-                  <th scope="col" className="px-6 py-3.5">Mức Sạc</th>
-                  <th scope="col" className="px-6 py-3.5">Sức khỏe (SoH)</th>
-                  <th scope="col" className="px-6 py-3.5">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {paginatedBatteries.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
-                      Không tìm thấy viên pin nào trong tồn kho.
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedBatteries.map(battery => {
-                    const statusCfg = STATUS_CONFIG[battery.status] || { label: battery.status, className: 'bg-gray-100 text-gray-800' };
-                    return (
-                      <tr key={battery.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{battery.id}</td>
-                        <td className="px-6 py-4 font-mono">{battery.serialNumber}</td>
-                        <td className="px-6 py-4 font-medium">{battery.model}</td>
-                        <td className="px-6 py-4 font-mono">{battery.capacityKwh} kWh</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                              <div
-                                className={`h-1.5 rounded-full ${battery.currentChargePercentage >= 50 ? 'bg-green-500' : battery.currentChargePercentage >= 20 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                style={{ width: `${battery.currentChargePercentage}%` }}
-                              />
-                            </div>
-                            <span className="text-xs font-mono font-semibold">{battery.currentChargePercentage}%</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`font-bold font-mono ${battery.healthPercentage >= 90 ? 'text-green-500' : battery.healthPercentage >= 75 ? 'text-yellow-500' : 'text-red-500'}`}>
-                            {battery.healthPercentage.toFixed(1)}%
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusCfg.className}`}>
-                            {statusCfg.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-        
-        {!loading && totalElements > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/20 dark:bg-gray-900/10">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Trang <span className="font-semibold text-gray-900 dark:text-white">{currentPage + 1}</span> / {totalPages}
-              </span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(0);
-                }}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg p-1.5 focus:ring-blue-500 outline-none"
-              >
-                <option value={5}>5 / trang</option>
-                <option value={10}>10 / trang</option>
-                <option value={15}>15 / trang</option>
-                <option value={20}>20 / trang</option>
-                <option value={50}>50 / trang</option>
-              </select>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                  className="px-4 py-2 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-250 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-                >
-                  ← Trước
-                </button>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-4 py-2 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-250 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-                >
-                  Tiếp →
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <BatteryTable
+        filteredBatteries={paginatedBatteries}
+        loading={loading}
+        error={error}
+        totalElements={totalElements}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        setCurrentPage={setCurrentPage}
+        setPageSize={setPageSize}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        filterSoh={filterSoh}
+        setFilterSoh={setFilterSoh}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        setActiveSearchQuery={setActiveSearchQuery}
+        onAddClick={() => showToast('Chức năng thêm pin đang được phát triển', 'info')}
+        onEditClick={(id) => showToast(`Chức năng sửa pin đang được phát triển`, 'info')}
+        onDeleteClick={(battery) => showToast(`Chức năng xóa pin đang được phát triển`, 'info')}
+        statusConfig={STATUS_CONFIG}
+        sohColor={(soh) => soh >= 90 ? 'text-green-500' : soh >= 75 ? 'text-yellow-500' : 'text-red-500'}
+      />
     </div>
   );
 };
