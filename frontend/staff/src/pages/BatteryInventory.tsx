@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router';
 import { useToast } from '../context/ToastContext';
+import { getApiUrl } from '../utils/api';
 
 interface Station {
   id: number;
@@ -29,8 +28,6 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 const BatteryInventory: React.FC = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [batteries, setBatteries] = useState<Battery[]>([]);
@@ -38,11 +35,8 @@ const BatteryInventory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchInventoryData = async () => {
@@ -52,7 +46,7 @@ const BatteryInventory: React.FC = () => {
         const token = localStorage.getItem('staff_auth_token');
         
         // 1. Tải danh sách trạm được phân công
-        const stationsRes = await fetch('http://localhost:8080/api/staff/stations', {
+        const stationsRes = await fetch(getApiUrl('/api/staff/stations'), {
           headers: { 'Authorization': `Bearer ${token}`, 'Accept': '*/*' }
         });
         
@@ -64,16 +58,16 @@ const BatteryInventory: React.FC = () => {
         if (!stationsRes.ok) throw new Error('Không thể tải danh sách trạm.');
         
         const stationsData: Station[] = await stationsRes.json();
-
+ 
         let allBatteries: Battery[] = [];
         let totalAvailable = 0;
         let totalCharging = 0;
         let totalMaintenance = 0;
-
+ 
         // 2. Tải pin và thống kê cho từng trạm
         for (const st of stationsData) {
           // Tải danh sách pin
-          const battRes = await fetch(`http://localhost:8080/api/staff/batteries/page?stationId=${st.id}&page=0&size=100`, {
+          const battRes = await fetch(getApiUrl(`/api/staff/batteries/page?stationId=${st.id}&page=0&size=100`), {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': '*/*' }
           });
           if (battRes.ok) {
@@ -82,9 +76,9 @@ const BatteryInventory: React.FC = () => {
               allBatteries = [...allBatteries, ...battPage.content];
             }
           }
-
+ 
           // Tải thống kê trạng thái của trạm
-          const countRes = await fetch(`http://localhost:8080/api/staff/batteries/countStatus?stationId=${st.id}`, {
+          const countRes = await fetch(getApiUrl(`/api/staff/batteries/countStatus?stationId=${st.id}`), {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': '*/*' }
           });
           if (countRes.ok) {
@@ -119,22 +113,17 @@ const BatteryInventory: React.FC = () => {
     return b.status === filterStatus;
   });
 
+  const totalElements = filteredBatteries.length;
+  const totalPages = Math.ceil(totalElements / pageSize) || 1;
+  const paginatedBatteries = filteredBatteries.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-start md:items-center">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Quản lý tồn kho pin</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Theo dõi số lượng pin đầy, đang sạc, bảo dưỡng theo thời gian thực.</p>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="mt-4 md:mt-0 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Đăng xuất
-        </button>
       </div>
       
       {/* Thống kê Tổng quan */}
@@ -143,7 +132,7 @@ const BatteryInventory: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
               <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
@@ -159,7 +148,7 @@ const BatteryInventory: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
               <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
@@ -195,7 +184,10 @@ const BatteryInventory: React.FC = () => {
           <div className="flex gap-2">
              <select 
                value={filterStatus}
-               onChange={(e) => setFilterStatus(e.target.value)}
+               onChange={(e) => {
+                 setFilterStatus(e.target.value);
+                 setCurrentPage(0);
+               }}
                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-xl p-2.5 outline-none"
              >
                 <option value="ALL">Tất cả tình trạng</option>
@@ -230,14 +222,14 @@ const BatteryInventory: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {filteredBatteries.length === 0 ? (
+                {paginatedBatteries.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
                       Không tìm thấy viên pin nào trong tồn kho.
                     </td>
                   </tr>
                 ) : (
-                  filteredBatteries.map(battery => {
+                  paginatedBatteries.map(battery => {
                     const statusCfg = STATUS_CONFIG[battery.status] || { label: battery.status, className: 'bg-gray-100 text-gray-800' };
                     return (
                       <tr key={battery.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -274,6 +266,49 @@ const BatteryInventory: React.FC = () => {
             </table>
           )}
         </div>
+        
+        {!loading && totalElements > 0 && (
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/20 dark:bg-gray-900/10">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Trang <span className="font-semibold text-gray-900 dark:text-white">{currentPage + 1}</span> / {totalPages}
+              </span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(0);
+                }}
+                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg p-1.5 focus:ring-blue-500 outline-none"
+              >
+                <option value={5}>5 / trang</option>
+                <option value={10}>10 / trang</option>
+                <option value={15}>15 / trang</option>
+                <option value={20}>20 / trang</option>
+                <option value={50}>50 / trang</option>
+              </select>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="px-4 py-2 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-250 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                >
+                  ← Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                  className="px-4 py-2 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-250 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                >
+                  Tiếp →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

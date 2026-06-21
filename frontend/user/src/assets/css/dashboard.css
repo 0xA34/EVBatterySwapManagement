@@ -140,6 +140,89 @@
     z-index: 1;
 }
 
+.station-header-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #8b5cf6 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* CSS Icon - Battery Charging Station */
+.css-station-icon {
+    width: 42px;
+    height: 42px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.css-station-icon::before {
+    content: '';
+    position: absolute;
+    width: 26px;
+    height: 34px;
+    border: 2px solid white;
+    border-radius: 6px;
+    background: linear-gradient(180deg,
+    rgba(255,255,255,0.3) 0%,
+    rgba(255,255,255,0.1) 100%);
+    box-shadow: inset 0 2px 8px rgba(255,255,255,0.2);
+}
+
+.css-station-icon::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 4px;
+    background: white;
+    border-radius: 2px 2px 0 0;
+    top: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.lightning-bolt {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 12px solid white;
+    z-index: 1;
+}
+
+.lightning-bolt::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 12px solid white;
+    top: 4px;
+    left: -5px;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.8));
+    }
+    50% {
+        opacity: 0.6;
+        filter: drop-shadow(0 0 8px rgba(255,255,255,1));
+    }
+}
+
 .station-icon {
     width: 64px;
     height: 64px;

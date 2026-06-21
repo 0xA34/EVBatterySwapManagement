@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { getApiUrl } from "../utils/api";
 
 import {
   GridIcon,
   HorizontaLDots,
   TableIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  PieChartIcon,
+  BoltIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -19,7 +22,12 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <PieChartIcon />,
+    name: "Doanh thu",
+    path: "/revenue",
+  },
+  {
+    icon: <BoltIcon />,
     name: "Tồn kho Pin",
     path: "/inventory",
   },
@@ -46,7 +54,7 @@ const AppSidebar: React.FC = () => {
       try {
         const token = localStorage.getItem("staff_auth_token");
         if (!token) return;
-        const response = await fetch("http://localhost:8080/api/staff/stations", {
+        const response = await fetch(getApiUrl("/api/staff/stations"), {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "*/*",
@@ -264,7 +272,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-[calc(100vh-4rem)] lg:h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"

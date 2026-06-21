@@ -1,11 +1,26 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const displayName = user?.username || "Người dùng";
   const displayRole =
@@ -16,7 +31,7 @@ export default function UserDropdown() {
         : user?.role || "STAFF";
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((current) => !current)}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
@@ -58,27 +73,27 @@ export default function UserDropdown() {
           </div>
 
           <div className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
-            <a
-              href="/profile"
+            <Link
+              to="/profile?tab=profile"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               onClick={() => setIsOpen(false)}
             >
               Edit profile
-            </a>
-            <a
-              href="/profile"
+            </Link>
+            <Link
+              to="/profile?tab=settings"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               onClick={() => setIsOpen(false)}
             >
               Account settings
-            </a>
-            <a
-              href="/profile"
+            </Link>
+            <Link
+              to="/profile?tab=support"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               onClick={() => setIsOpen(false)}
             >
               Support
-            </a>
+            </Link>
           </div>
 
           <button

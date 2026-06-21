@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl } from '../utils/api';
 
 type User = {
   username: string;
@@ -26,19 +27,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearLocalAuthData = () => {
     localStorage.removeItem(STAFF_TOKEN_KEY);
     localStorage.removeItem(STAFF_USER_KEY);
+    localStorage.removeItem('staff_auth_timestamp');
     setUser(null);
     setIsAuthenticated(false);
   };
 
   useEffect(() => {
-    // Xóa bỏ token và thông tin người dùng khỏi storage khi ứng dụng khởi động để luôn yêu cầu đăng nhập lại
-    clearLocalAuthData();
+    // Phục hồi session đăng nhập nếu chưa quá 30 phút
+    const token = localStorage.getItem(STAFF_TOKEN_KEY);
+    const storedUser = localStorage.getItem(STAFF_USER_KEY);
+    const timestampStr = localStorage.getItem('staff_auth_timestamp');
+
+    if (token && storedUser && timestampStr) {
+      const timestamp = parseInt(timestampStr, 10);
+      const isExpired = Date.now() - timestamp > 30 * 60 * 1000; // 30 phút
+      if (!isExpired) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setIsAuthenticated(true);
+          // Gia hạn session thêm 30p kể từ thời điểm reload/hoạt động
+          localStorage.setItem('staff_auth_timestamp', Date.now().toString());
+        } catch (e) {
+          clearLocalAuthData();
+        }
+      } else {
+        clearLocalAuthData();
+      }
+    } else {
+      clearLocalAuthData();
+    }
     setIsAuthInitialized(true);
   }, []);
 
   const login = (newToken: string, userData: User) => {
     localStorage.setItem(STAFF_TOKEN_KEY, newToken);
     localStorage.setItem(STAFF_USER_KEY, JSON.stringify(userData));
+    localStorage.setItem('staff_auth_timestamp', Date.now().toString());
     setUser(userData);
     setIsAuthenticated(true);
   };
@@ -47,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem(STAFF_TOKEN_KEY);
     if (token) {
       try {
-        await fetch('http://localhost:8080/api/auth/logout', {
+        await fetch(getApiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`

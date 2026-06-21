@@ -25,6 +25,8 @@ public interface IStationService {
             Pageable pageable
     );
 
+    StationHomeResponse findStationHomeById(int id);
+
 
     Page<Station> findStationsWithKeyword(
             @Param("keyword") String keyword,

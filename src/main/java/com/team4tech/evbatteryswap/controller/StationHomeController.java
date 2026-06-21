@@ -31,6 +31,9 @@ public class StationHomeController {
         return stationService.findStationsWithKeywordHome(keyword, status, quan, province, phuongxa, pageable);
     }
 
-
+    @GetMapping("/{id}")
+    public StationHomeResponse getStationById(@PathVariable int id) {
+        return stationService.findStationHomeById(id);
+    }
 
 }

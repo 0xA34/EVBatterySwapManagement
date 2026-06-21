@@ -1,2 +1,14 @@
 /* Clean up index.css, just import our style.css and standard stuff if needed */
 @import url('/assets/css/style.css');
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.blink-icon {
+  animation: blink 1.5s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
+}

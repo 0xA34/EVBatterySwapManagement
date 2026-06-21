@@ -4,8 +4,8 @@ const BatterySwap: React.FC = () => {
   const [returnStatus, setReturnStatus] = useState('normal');
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="space-y-6">
+      <div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Giao dịch đổi pin</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">Kiểm tra pin trả về, bàn giao pin mới và thanh toán phí đổi pin.</p>
       </div>

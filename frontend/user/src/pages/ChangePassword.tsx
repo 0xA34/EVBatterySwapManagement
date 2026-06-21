@@ -7,7 +7,7 @@ export default function ChangePassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
       setMessage({ type: 'error', text: 'Vui lòng điền đầy đủ thông tin.' });
@@ -22,12 +22,42 @@ export default function ChangePassword() {
       return;
     }
     
-    // Mock success
-    setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setMessage(null), 3000);
+    const token = localStorage.getItem('user_token');
+    if (!token) {
+      setMessage({ type: 'error', text: 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.' });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/update-password?oldPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const resText = await response.text();
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        let errorMsg = 'Có lỗi xảy ra khi cập nhật mật khẩu.';
+        if (resText === "Password doesn't match") {
+          errorMsg = 'Mật khẩu hiện tại không chính xác.';
+        } else if (resText === "Password already exists") {
+          errorMsg = 'Mật khẩu mới trùng với mật khẩu hiện tại.';
+        } else {
+          errorMsg = resText || errorMsg;
+        }
+        setMessage({ type: 'error', text: errorMsg });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Không thể kết nối tới máy chủ.' });
+    }
   };
 
   const checkPasswordStrength = (pass: string) => {
@@ -41,13 +71,12 @@ export default function ChangePassword() {
   };
 
   const strength = checkPasswordStrength(newPassword);
-  let strengthClass = '';
   let strengthText = '';
   if (newPassword.length > 0) {
-    if (strength <= 2) { strengthClass = 'bg-red-500 w-1/4'; strengthText = 'Mật khẩu yếu'; }
-    else if (strength === 3) { strengthClass = 'bg-yellow-500 w-2/4'; strengthText = 'Mật khẩu trung bình'; }
-    else if (strength === 4) { strengthClass = 'bg-blue-500 w-3/4'; strengthText = 'Mật khẩu tốt'; }
-    else { strengthClass = 'bg-green-500 w-full'; strengthText = 'Mật khẩu mạnh'; }
+    if (strength <= 2) { strengthText = 'Mật khẩu yếu'; }
+    else if (strength === 3) { strengthText = 'Mật khẩu trung bình'; }
+    else if (strength === 4) { strengthText = 'Mật khẩu tốt'; }
+    else { strengthText = 'Mật khẩu mạnh'; }
   }
 
   return (

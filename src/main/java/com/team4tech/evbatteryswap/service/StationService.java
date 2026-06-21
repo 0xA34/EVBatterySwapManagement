@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class StationService implements IStationService {
 
     private final StationRepository stationRepository;
-    private  final BatteryRepository  batteryRepository;
+    private final BatteryRepository batteryRepository;
     private final NotificationService notificationService;
 
     @Override
@@ -43,12 +43,9 @@ public class StationService implements IStationService {
             @Param("quan") Integer quan,
             @Param("province") Integer province,
             @Param("phuongxa") Integer phuongxa,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         return stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -58,10 +55,10 @@ public class StationService implements IStationService {
             @Param("quan") Integer quan,
             @Param("province") Integer province,
             @Param("phuongxa") Integer phuongxa,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         // 1. Lấy danh sách trạm (phân trang bình thường)
-        Page<Station> stationPage = stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa, pageable);
+        Page<Station> stationPage = stationRepository.findStationsWithKeyword(keyword, status, quan, province, phuongxa,
+                pageable);
 
         // Nếu không có trạm nào thì trả về Page rỗng luôn
         if (stationPage.isEmpty()) {
@@ -88,7 +85,8 @@ public class StationService implements IStationService {
             countMapByStation.get(sId).put(stat, count);
         }
 
-        // 5. Các trạng thái bắt buộc phải hiển thị (giống logic bạn đã làm bên BatteryService)
+        // 5. Các trạng thái bắt buộc phải hiển thị (giống logic bạn đã làm bên
+        // BatteryService)
         List<String> allStatuses = Arrays.asList("AVAILABLE", "EMPTY", "RESERVED", "RENTED", "CHARGING");
 
         // 6. Map dữ liệu Station thành StationWithBatteryInfoResponse
@@ -105,16 +103,6 @@ public class StationService implements IStationService {
             return new StationHomeResponse(station, finalBatteryCounts);
         });
     }
-
-
-
-
-
-
-
-
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -228,7 +216,8 @@ public class StationService implements IStationService {
     @Override
     @Transactional(readOnly = true)
     public List<StationStatusCountResponse> countStationsByStatus() {
-        // 1. Lấy dữ liệu thực tế từ database (ví dụ chỉ có MAINTENANCE, ACTIVE, INACTIVE)
+        // 1. Lấy dữ liệu thực tế từ database (ví dụ chỉ có MAINTENANCE, ACTIVE,
+        // INACTIVE)
         List<StationStatusCountResponse> dbResults = stationRepository.countStationsByStatus();
 
         // Chuyển danh sách từ DB thành Map để dễ tra cứu: Key là Status, Value là Count
@@ -249,6 +238,5 @@ public class StationService implements IStationService {
 
         return finalResults;
     }
-
 
 }

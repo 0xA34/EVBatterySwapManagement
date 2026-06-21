@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import { getApiUrl } from '../../utils/api';
 
 type LoginResponse = {
   accessToken?: string;
@@ -25,7 +26,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch(getApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Accept': '*/*',
@@ -120,6 +121,15 @@ export default function Login() {
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Chưa có tài khoản?{' '}
+            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300">
+              Đăng ký
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import '../assets/css/book.css';
 
-const ADDRESS_API_BASE = 'https://addresskit.cas.so/address-kit/';
+const PROVINCE_API = 'http://localhost:8080/api/donvihanhchinh/tinhThanh';
+const DISTRICT_API = 'http://localhost:8080/api/donvihanhchinh/quanHuyen';
+const WARD_API = 'http://localhost:8080/api/donvihanhchinh/phuongXa';
 
 export default function Book() {
   const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [wards, setWards] = useState<any[]>([]);
-  
+
   const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedWard, setSelectedWard] = useState('');
@@ -26,9 +28,9 @@ export default function Book() {
 
   const fetchProvinces = async () => {
     try {
-      const response = await fetch(`${ADDRESS_API_BASE}?endpoint=2025-07-01/provinces`);
+      const response = await fetch(PROVINCE_API);
       const data = await response.json();
-      setProvinces(data.provinces || data);
+      setProvinces(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -36,9 +38,9 @@ export default function Book() {
 
   const fetchDistricts = async (provinceId: string) => {
     try {
-      const response = await fetch(`${ADDRESS_API_BASE}?endpoint=2025-07-01/provinces/${provinceId}/districts`);
+      const response = await fetch(`${DISTRICT_API}?idTinhThanh=${provinceId}`);
       const data = await response.json();
-      setDistricts(data.districts || data);
+      setDistricts(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -46,9 +48,9 @@ export default function Book() {
 
   const fetchWards = async (districtId: string) => {
     try {
-      const response = await fetch(`${ADDRESS_API_BASE}?endpoint=2025-07-01/districts/${districtId}/communes`);
+      const response = await fetch(`${WARD_API}?idQuanHuyen=${districtId}`);
       const data = await response.json();
-      setWards(data.communes || data);
+      setWards(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -120,7 +122,7 @@ export default function Book() {
     } else {
       start.setMinutes(start.getMinutes() + 5);
     }
-    
+
     // Convert to local time string for input datetime-local
     const tzOffset = start.getTimezoneOffset() * 60000;
     const localStart = new Date(start.getTime() - tzOffset);
@@ -184,7 +186,7 @@ export default function Book() {
                     </div>
                     <select id="tinhSelect" className="field-select" value={selectedProvince} onChange={handleProvinceChange} style={{ width: '100%', height: '34px', padding: '4px 8px', border: '1px solid #cbd5e1', fontSize: '13px', borderRadius: '4px', marginTop: 0 }}>
                       <option value="">-- Chọn tỉnh/TP --</option>
-                      {provinces.map(p => <option key={p.code || p.id} value={p.code || p.id}>{p.name}</option>)}
+                      {provinces.map((p, i) => <option key={`p-${p.id || i}`} value={p.id}>{p.tinhthanhcol}</option>)}
                     </select>
                   </div>
 
@@ -194,17 +196,17 @@ export default function Book() {
                     </div>
                     <select id="huyenSelect" className="field-select" value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince} style={{ width: '100%', height: '34px', padding: '4px 8px', border: '1px solid #cbd5e1', fontSize: '13px', borderRadius: '4px', marginTop: 0 }}>
                       <option value="">-- Chọn quận/huyện --</option>
-                      {districts.map(d => <option key={d.code || d.id} value={d.code || d.id}>{d.name}</option>)}
+                      {districts.map((d, i) => <option key={`d-${d.id || i}`} value={d.id}>{d.tenquanhuyen}</option>)}
                     </select>
                   </div>
-                  
+
                   <div>
                     <div style={{ marginBottom: '4px' }}>
                       <label style={{ fontSize: '13px', color: '#555', margin: 0 }}>Phường/Xã <span style={{ color: 'red' }}>*</span></label>
                     </div>
                     <select id="xaSelect" className="field-select" value={selectedWard} onChange={(e) => setSelectedWard(e.target.value)} disabled={!selectedDistrict} style={{ width: '100%', height: '34px', padding: '4px 8px', border: '1px solid #cbd5e1', fontSize: '13px', borderRadius: '4px', marginTop: 0 }}>
                       <option value="">-- Chọn phường/xã --</option>
-                      {wards.map(w => <option key={w.code || w.id} value={w.code || w.id}>{w.name}</option>)}
+                      {wards.map((w, i) => <option key={`w-${w.id || i}`} value={w.id}>{w.tenphuongxa}</option>)}
                     </select>
                   </div>
                 </div>

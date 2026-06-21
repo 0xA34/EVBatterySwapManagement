@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const ADDRESS_API_BASE = 'https://addresskit.cas.so/address-kit/';
+const PROVINCE_API = 'http://localhost:8080/api/donvihanhchinh/tinhThanh';
+const DISTRICT_API = 'http://localhost:8080/api/donvihanhchinh/quanHuyen';
+const WARD_API = 'http://localhost:8080/api/donvihanhchinh/phuongXa';
 
 export default function RentPin() {
   const [searchParams] = useSearchParams();
@@ -19,15 +21,18 @@ export default function RentPin() {
   };
 
   const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
   const [communes, setCommunes] = useState<any[]>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingCommunes, setLoadingCommunes] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
     email: '',
     province: '',
+    district: '',
     commune: '',
     address_detail: '',
     start_date: '',
@@ -51,9 +56,9 @@ export default function RentPin() {
   const fetchProvinces = async () => {
     try {
       setLoadingProvinces(true);
-      const response = await fetch(`${ADDRESS_API_BASE}?endpoint=2025-07-01/provinces`);
+      const response = await fetch(PROVINCE_API);
       const data = await response.json();
-      setProvinces(data.provinces || data);
+      setProvinces(data || []);
     } catch (err) {
       setError('Không thể tải danh sách tỉnh thành. Vui lòng thử lại.');
     } finally {
@@ -61,16 +66,34 @@ export default function RentPin() {
     }
   };
 
-  const fetchCommunes = async (provinceId: string) => {
+  const fetchDistricts = async (provinceId: string) => {
     if (!provinceId) {
+      setDistricts([]);
+      setCommunes([]);
+      return;
+    }
+    try {
+      setLoadingDistricts(true);
+      const response = await fetch(`${DISTRICT_API}?idTinhThanh=${provinceId}`);
+      const data = await response.json();
+      setDistricts(data || []);
+    } catch (err) {
+      setError('Không thể tải danh sách quận huyện. Vui lòng thử lại.');
+    } finally {
+      setLoadingDistricts(false);
+    }
+  };
+
+  const fetchCommunes = async (districtId: string) => {
+    if (!districtId) {
       setCommunes([]);
       return;
     }
     try {
       setLoadingCommunes(true);
-      const response = await fetch(`${ADDRESS_API_BASE}?endpoint=2025-07-01/provinces/${provinceId}/communes`);
+      const response = await fetch(`${WARD_API}?idQuanHuyen=${districtId}`);
       const data = await response.json();
-      setCommunes(data.communes || data);
+      setCommunes(data || []);
     } catch (err) {
       setError('Không thể tải danh sách xã phường. Vui lòng thử lại.');
     } finally {
@@ -83,6 +106,9 @@ export default function RentPin() {
     setFormData(prev => ({ ...prev, [name]: value }));
 
     if (name === 'province') {
+      fetchDistricts(value);
+      setFormData(prev => ({ ...prev, district: '', commune: '' }));
+    } else if (name === 'district') {
       fetchCommunes(value);
       setFormData(prev => ({ ...prev, commune: '' }));
     }
@@ -94,7 +120,7 @@ export default function RentPin() {
   };
 
   const validateForm = () => {
-    const required = ['full_name', 'phone', 'province', 'commune', 'address_detail', 'start_date', 'rental_days'];
+    const required = ['full_name', 'phone', 'province', 'district', 'commune', 'address_detail', 'start_date', 'rental_days'];
     for (const field of required) {
       if (!formData[field as keyof typeof formData]) {
         setError('Vui lòng điền đầy đủ thông tin bắt buộc (*)');
@@ -131,7 +157,7 @@ export default function RentPin() {
     try {
       // Mock calling process_rent.php logic equivalent
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       setSuccess('Thuê pin thành công! Bạn sẽ được chuyển về dashboard.');
       setTimeout(() => {
         navigate('/');
@@ -153,7 +179,7 @@ export default function RentPin() {
       <div style={{ background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)', borderRadius: '20px', padding: '2rem', color: 'white', marginBottom: '2rem', textAlign: 'center' }}>
         <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{pin.battery_serial}</h3>
         <p style={{ opacity: 0.9, marginBottom: '1rem' }}>{pin.battery_model}</p>
-        
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
           <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '12px' }}>
             <div style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '0.5rem' }}>Sức khỏe pin</div>
@@ -173,7 +199,7 @@ export default function RentPin() {
       <div style={{ background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
         {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
         {success && <div style={{ background: '#dcfce7', color: '#166534', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>{success}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Họ và tên *</label>
@@ -192,20 +218,28 @@ export default function RentPin() {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Địa chỉ sử dụng *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div>
                 <label style={{ display: 'block', color: '#6b7280', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Tỉnh/Thành phố *</label>
                 <select name="province" value={formData.province} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '12px' }} required>
                   <option value="">Chọn tỉnh/thành phố</option>
-                  {provinces.map(p => <option key={p.code || p.id} value={p.code || p.id}>{p.name}</option>)}
+                  {provinces.map((p, i) => <option key={`p-${p.id || i}`} value={p.id}>{p.tinhthanhcol}</option>)}
                 </select>
                 {loadingProvinces && <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Đang tải...</span>}
               </div>
               <div>
+                <label style={{ display: 'block', color: '#6b7280', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Quận/Huyện *</label>
+                <select name="district" value={formData.district} onChange={handleInputChange} disabled={!formData.province} style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '12px' }} required>
+                  <option value="">Chọn quận/huyện</option>
+                  {districts.map((d, i) => <option key={`d-${d.id || i}`} value={d.id}>{d.tenquanhuyen}</option>)}
+                </select>
+                {loadingDistricts && <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Đang tải...</span>}
+              </div>
+              <div>
                 <label style={{ display: 'block', color: '#6b7280', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Xã/Phường *</label>
-                <select name="commune" value={formData.commune} onChange={handleInputChange} disabled={!formData.province} style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '12px' }} required>
+                <select name="commune" value={formData.commune} onChange={handleInputChange} disabled={!formData.district} style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '12px' }} required>
                   <option value="">Chọn xã/phường</option>
-                  {communes.map(c => <option key={c.code || c.id} value={c.code || c.id}>{c.name}</option>)}
+                  {communes.map((c, i) => <option key={`c-${c.id || i}`} value={c.id}>{c.tenphuongxa}</option>)}
                 </select>
                 {loadingCommunes && <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Đang tải...</span>}
               </div>

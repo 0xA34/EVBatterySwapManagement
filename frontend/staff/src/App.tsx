@@ -6,7 +6,10 @@ import BatteryInventory from "./pages/BatteryInventory";
 import StationManagement from "./pages/StationManagement";
 import StationDetail from "./pages/StationDetail";
 import BatterySwap from "./pages/BatterySwap";
+import Revenue from "./pages/Revenue";
+import Profile from "./pages/Profile";
 import Login from "./pages/Auth/Login";
+import Register from "./pages/Auth/Register";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -20,6 +23,7 @@ export default function App() {
           <Routes>
             {/* Public Route */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Protected Dashboard Layout */}
             <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
@@ -29,6 +33,8 @@ export default function App() {
                 <Route path="/stations" element={<StationManagement />} />
                 <Route path="/stations/:id" element={<StationDetail />} />
                 <Route path="/swap" element={<BatterySwap />} />
+                <Route path="/revenue" element={<Revenue />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
             </Route>
 

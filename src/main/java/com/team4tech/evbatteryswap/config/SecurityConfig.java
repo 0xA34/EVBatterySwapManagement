@@ -46,43 +46,56 @@ public class SecurityConfig {
     }
 
     @Bean
+    public org.springframework.web.filter.CorsFilter corsFilter() {
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+        config.setAllowedOriginPatterns(java.util.Collections.singletonList("*"));
+        config.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(java.util.Collections.singletonList("*"));
+        config.setAllowCredentials(true);
+        source.registerCorsConfiguration("/**", config);
+        return new org.springframework.web.filter.CorsFilter(source);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF — not needed for stateless JWT APIs
-            .csrf(AbstractHttpConfigurer::disable)
+                // Enable CORS using the CorsFilter bean
+                .cors(cors -> cors.disable())
+                .addFilterBefore(corsFilter(), org.springframework.web.filter.CorsFilter.class)
+                // Disable CSRF — not needed for stateless JWT APIs
+                .csrf(AbstractHttpConfigurer::disable)
 
-            // Stateless session — JWT handles auth state
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Stateless session — JWT handles auth state
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Authorization rules
-            .authorizeHttpRequests(auth -> auth
-                    // Public: login endpoint
-                    .requestMatchers("/api/auth/**").permitAll()
+                // Authorization rules
+                .authorizeHttpRequests(auth -> auth
+                        // Public: login endpoint
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                    // Public: WebSocket endpoint (auth handled in handshake)
-                    .requestMatchers("/ws/**").permitAll()
+                        // Public: WebSocket endpoint (auth handled in handshake)
+                        .requestMatchers("/ws/**").permitAll()
 
-                    // Public: Swagger UI and OpenAPI docs (anyone can view the docs)
-                    // Authorization is enforced at the individual API endpoint level
-                    .requestMatchers(
-                            "/swagger-ui.html",
-                            "/swagger-ui/**",
-                            "/api-docs",
-                            "/api-docs/**",
-                            "/v3/api-docs",
-                            "/v3/api-docs/**"
-                    ).permitAll()
+                        // Public: Swagger UI and OpenAPI docs (anyone can view the docs)
+                        // Authorization is enforced at the individual API endpoint level
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/api-docs",
+                                "/api-docs/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**")
+                        .permitAll()
 
-                    // Everything else requires authentication
-                    .anyRequest().permitAll()
-            )
+                        // Everything else requires authentication
+                        .anyRequest().permitAll())
 
-            // Register the authentication provider
-            .authenticationProvider(authenticationProvider())
+                // Register the authentication provider
+                .authenticationProvider(authenticationProvider())
 
-            // Add JWT filter before the default username/password filter
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add JWT filter before the default username/password filter
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

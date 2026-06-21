@@ -35,7 +35,7 @@ export default function Login() {
       }
 
       const data = await response.json();
-      
+
       // Normalize role and check for allowed roles
       const role = data.role ? data.role.toUpperCase().replace(/^ROLE_/, '') : '';
       if (role !== 'DRIVER') {
@@ -55,7 +55,7 @@ export default function Login() {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('user_role', 'DRIVER');
       window.dispatchEvent(new Event('authChange'));
-      
+
       navigate('/my');
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi kết nối máy chủ.');
@@ -73,26 +73,26 @@ export default function Login() {
           <form className="auth-form" onSubmit={handleLogin} noValidate>
             <label className="field">
               <span className="label">Tài Khoản</span>
-              <input 
-                type="text" 
-                name="username" 
-                placeholder="Nhập tài khoản" 
-                required 
+              <input
+                type="text"
+                name="username"
+                placeholder="Nhập tài khoản"
+                required
                 value={formData.username}
                 onChange={handleInputChange}
               />
             </label>
             <label className="field" style={{ position: 'relative' }}>
               <span className="label">Mật Khẩu</span>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                name="password" 
-                placeholder="Nhập mật khẩu" 
-                required 
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Nhập mật khẩu"
+                required
                 value={formData.password}
                 onChange={handleInputChange}
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
