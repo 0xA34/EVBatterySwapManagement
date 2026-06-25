@@ -33,13 +33,28 @@ public class SwapOrderService {
     private final BatteryRepository batteryRepository;
     private final StationRepository stationRepository;
     private final UserRepository userRepository;
-    private final BatterySwapService batterySwapService;
+    private final BatteryDiagnosticsService diagnosticsService;
     private final NotificationService notificationService;
 
     @Transactional
     public SwapOrderResponse createBooking(String username, SwapOrderRequest request) {
         User driver = findDriver(username);
         checkNoActiveOrder(driver);
+
+        Instant now = Instant.now();
+        Instant maxAllowed = now.plus(3, ChronoUnit.HOURS);
+        Instant scheduledAt = request.getScheduledAt();
+
+        if (scheduledAt != null) {
+            if (scheduledAt.isBefore(now)) {
+                throw new IllegalArgumentException("Thời gian đặt lịch không được ở trong quá khứ.");
+            }
+            if (scheduledAt.isAfter(maxAllowed)) {
+                throw new IllegalArgumentException("Thời gian đặt lịch không được vượt quá 3 giờ kể từ bây giờ.");
+            }
+        } else {
+            scheduledAt = maxAllowed;
+        }
 
         Station station = findActiveStation(request.getStationId());
         Battery oldBattery = batteryRepository.findCurrentBatteryOfUser(driver.getId()).orElse(null);
@@ -55,11 +70,12 @@ public class SwapOrderService {
         order.setNewBattery(newBattery);
         order.setOrderType("BOOKING");
         order.setStatus("PENDING");
-        order.setExpiresAt(Instant.now().plus(3, ChronoUnit.HOURS));
+        order.setScheduledAt(scheduledAt);
+        order.setExpiresAt(scheduledAt);
         orderRepository.save(order);
 
-        log.info("[Order] Driver '{}' created BOOKING #{} at station '{}', battery #{} RESERVED",
-                username, order.getId(), station.getName(), newBattery.getId());
+        log.info("[Order] Driver '{}' created BOOKING #{} at station '{}', battery #{} RESERVED, scheduled={}",
+                username, order.getId(), station.getName(), newBattery.getId(), scheduledAt);
 
         notifyStaffAtStation(station, driver, "BOOKING");
 
@@ -328,23 +344,30 @@ public class SwapOrderService {
     private void executeSwap(BatterySwapOrder order) {
         Battery oldBattery = order.getOldBattery();
         Battery newBattery = order.getNewBattery();
+        User driver = order.getDriver();
+        Station station = order.getStation();
 
         if (newBattery != null && "RESERVED".equalsIgnoreCase(newBattery.getStatus())) {
             newBattery.setStatus("AVAILABLE");
-            batteryRepository.save(newBattery);
         }
 
         if (oldBattery != null) {
-            com.team4tech.evbatteryswap.dto.request.SwapRequest swapReq =
-                    new com.team4tech.evbatteryswap.dto.request.SwapRequest(
-                            order.getStation().getId(), null, newBattery.getId());
-            batterySwapService.swap(order.getDriver().getUsername(), swapReq);
-        } else {
-            com.team4tech.evbatteryswap.dto.request.RentRequest rentReq =
-                    new com.team4tech.evbatteryswap.dto.request.RentRequest(
-                            order.getStation().getId(), null, newBattery.getId());
-            batterySwapService.rent(order.getDriver().getUsername(), rentReq);
+            oldBattery.setStatus("CHARGING");
+            oldBattery.setUser(null);
+            oldBattery.setCurrentStation(station);
+            batteryRepository.saveAndFlush(oldBattery);
+
+            diagnosticsService.recalculate(oldBattery.getId(), "ON_SWAP");
         }
+
+        newBattery.setStatus("IN_USE");
+        newBattery.setUser(driver);
+        newBattery.setCurrentStation(null);
+        batteryRepository.saveAndFlush(newBattery);
+
+        log.info("[Order] executeSwap — old=#{} → CHARGING, new=#{} → IN_USE for driver '{}'",
+                oldBattery != null ? oldBattery.getId() : "none",
+                newBattery.getId(), driver.getUsername());
     }
 
     private void notifyStaffAtStation(Station station, User driver, String orderType) {

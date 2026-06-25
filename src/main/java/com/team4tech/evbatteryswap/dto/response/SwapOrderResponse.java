@@ -21,7 +21,8 @@ public record SwapOrderResponse(
         String status,
         String rejectReason,
         Instant createdAt,
-        Instant expiresAt
+        Instant expiresAt,
+        Instant scheduledAt
 ) {
     public static SwapOrderResponse from(BatterySwapOrder order) {
         return SwapOrderResponse.builder()
@@ -40,6 +41,7 @@ public record SwapOrderResponse(
                 .rejectReason(order.getRejectReason())
                 .createdAt(order.getCreatedAt())
                 .expiresAt(order.getExpiresAt())
+                .scheduledAt(order.getScheduledAt())
                 .build();
     }
 }

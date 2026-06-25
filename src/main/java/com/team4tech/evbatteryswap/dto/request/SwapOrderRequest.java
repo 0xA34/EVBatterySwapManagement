@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Data
 public class SwapOrderRequest {
@@ -18,6 +19,8 @@ public class SwapOrderRequest {
     @DecimalMin(value = "0", message = "Ngưỡng sạc không được âm")
     @DecimalMax(value = "100", message = "Ngưỡng sạc không được vượt quá 100")
     private BigDecimal minChargePercent;
+
+    private Instant scheduledAt;
 
     public BigDecimal effectiveMinCharge() {
         return minChargePercent != null ? minChargePercent : new BigDecimal("80");

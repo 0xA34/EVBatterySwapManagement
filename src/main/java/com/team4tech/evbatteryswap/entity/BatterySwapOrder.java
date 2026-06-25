@@ -53,6 +53,9 @@ public class BatterySwapOrder {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(name = "scheduled_at")
+    private Instant scheduledAt;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
