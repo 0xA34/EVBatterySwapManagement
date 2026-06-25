@@ -254,6 +254,19 @@ public class SwapOrderService {
                 .map(SwapOrderResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public Page<SwapOrderResponse> getStaffHistory(String username, String status, Pageable pageable) {
+        User staff = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy staff: " + username));
+        List<Integer> stationIds = userRepository.findStationsByUserId(staff.getId())
+                .stream().map(s -> s.getId()).toList();
+        if (stationIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return orderRepository.findOrdersByStationIds(stationIds, status, pageable)
+                .map(SwapOrderResponse::from);
+    }
+
     @Scheduled(fixedDelay = 60_000)
     @Transactional
     public void autoExpireBookings() {

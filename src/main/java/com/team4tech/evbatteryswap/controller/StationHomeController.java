@@ -30,10 +30,4 @@ public class StationHomeController {
         Pageable pageable = PageRequest.of(page, size);
         return stationService.findStationsWithKeywordHome(keyword, status, quan, province, phuongxa, pageable);
     }
-
-    @GetMapping("/{id}")
-    public StationHomeResponse getStationById(@PathVariable int id) {
-        return stationService.findStationHomeById(id);
-    }
-
 }

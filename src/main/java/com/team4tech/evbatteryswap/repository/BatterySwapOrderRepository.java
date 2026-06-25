@@ -32,4 +32,15 @@ public interface BatterySwapOrderRepository extends JpaRepository<BatterySwapOrd
 
     @Query("SELECT o FROM BatterySwapOrder o WHERE o.newBattery.id = :batteryId AND o.status IN ('PENDING', 'APPROVED')")
     Optional<BatterySwapOrder> findActiveOrderByBattery(@Param("batteryId") Integer batteryId);
+
+    @Query("""
+            SELECT o FROM BatterySwapOrder o
+            WHERE o.station.id IN :stationIds
+            AND (:status IS NULL OR o.status = :status)
+            ORDER BY o.createdAt DESC
+            """)
+    Page<BatterySwapOrder> findOrdersByStationIds(
+            @Param("stationIds") List<Integer> stationIds,
+            @Param("status") String status,
+            Pageable pageable);
 }

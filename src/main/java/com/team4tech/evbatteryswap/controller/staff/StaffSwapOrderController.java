@@ -74,4 +74,19 @@ public class StaffSwapOrderController {
         SwapOrderResponse response = swapOrderService.completeBooking(orderId);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "Xem lịch sử đổi pin tại trạm của staff",
+            description = "Trả về danh sách tất cả lệnh đổi pin (COMPLETED, REJECTED, CANCELLED, EXPIRED, ...). Có thể lọc theo status.")
+    @GetMapping("/history")
+    public ResponseEntity<Page<SwapOrderResponse>> getHistory(
+            HttpServletRequest request,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        String username = getUsername(request);
+        Page<SwapOrderResponse> result = swapOrderService.getStaffHistory(
+                username, status, PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        return ResponseEntity.ok(result);
+    }
 }
