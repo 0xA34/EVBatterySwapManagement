@@ -77,6 +77,15 @@ export default function Station() {
   const [isScheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedBattery, setSelectedBattery] = useState<any>(null);
   const [scheduleTime, setScheduleTime] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+  useEffect(() => {
+    if (feedbackModal) {
+      const timer = setTimeout(() => setFeedbackModal(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackModal]);
 
   const openScheduleModal = (battery: any) => {
     setSelectedBattery(battery);
@@ -87,11 +96,72 @@ export default function Station() {
     setScheduleModalOpen(false);
     setSelectedBattery(null);
     setScheduleTime('');
+    setIsScheduling(false);
   };
 
-  const handleConfirmSchedule = () => {
-    alert(`Đã đặt lịch lấy pin ${selectedBattery?.id} vào lúc ${scheduleTime}`);
-    closeScheduleModal();
+  const handleConfirmSwap = async (isBooking: boolean = false) => {
+    try {
+      let scheduledAtIso = undefined;
+      if (isBooking) {
+        if (!scheduleTime) {
+          setFeedbackModal({type: 'error', message: 'Vui lòng chọn thời gian dự kiến.'});
+          return;
+        }
+        const date = new Date(scheduleTime);
+        scheduledAtIso = date.toISOString();
+      }
+
+      const token = localStorage.getItem('user_token');
+      const endpoint = isBooking ? '/api/driver/swap-orders/booking' : '/api/driver/swap-orders/direct-swap';
+      
+      const payload: any = {
+        stationId: Number(stationId),
+        batteryId: selectedBattery?.id || 0,
+        minChargePercent: 100
+      };
+      if (isBooking) {
+        payload.scheduledAt = scheduledAtIso;
+      }
+
+      const response = await fetch(`http://localhost:8080${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        setFeedbackModal({type: 'success', message: isBooking ? 'Đặt lịch thành công!' : 'Yêu cầu đổi pin của bạn đã được tạo thành công!'});
+        fetchBatteries();
+      } else {
+        let errorMessage = 'Lỗi không xác định';
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            if (typeof errorData.message === 'object') {
+              errorMessage = Object.values(errorData.message).join(', ');
+            } else {
+              errorMessage = errorData.message;
+            }
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+        } catch(e) {
+          errorMessage = await response.text();
+        }
+        setFeedbackModal({type: 'error', message: `Thất bại: ${errorMessage}`});
+      }
+    } catch (error) {
+      console.error('Lỗi khi gọi API đổi pin:', error);
+      setFeedbackModal({type: 'error', message: 'Đã xảy ra lỗi kết nối với máy chủ.'});
+    } finally {
+      closeScheduleModal();
+    }
   };
 
   return (
@@ -164,11 +234,11 @@ export default function Station() {
             <div className="battery-meter">
               <div className="battery-bar">
                 <div
-                  className={`battery-fill ${(battery.healthPercentage ?? 100) >= 80 ? 'high' : (battery.healthPercentage ?? 100) >= 40 ? 'medium' : 'low'}`}
-                  style={{ width: `${battery.healthPercentage ?? 100}%` }}
+                  className={`battery-fill ${(battery.currentChargePercentage ?? 100) >= 80 ? 'high' : (battery.currentChargePercentage ?? 100) >= 40 ? 'medium' : 'low'}`}
+                  style={{ width: `${battery.currentChargePercentage ?? 100}%` }}
                 ></div>
               </div>
-              <span style={{ fontWeight: 600, color: '#1f2937' }}>{battery.healthPercentage ?? 100}%</span>
+              <span style={{ fontWeight: 600, color: '#1f2937' }}>{battery.currentChargePercentage ?? 100}%</span>
             </div>
 
             <div className="pin-meta">
@@ -188,11 +258,11 @@ export default function Station() {
                   onClick={() => openScheduleModal(battery)}
                   className="rent-button"
                 >
-                  Đặt Lịch Lấy Pin
+                  Đổi Pin
                 </button>
               ) : (
                 <button className="rent-button disabled" disabled>
-                  Đặt Lịch Lấy Pin
+                  Đổi Pin
                 </button>
               )}
             </div>
@@ -242,14 +312,13 @@ export default function Station() {
                 </svg>
               </div>
               <div className="schedule-modal-title">
-                <h2>Đặt Lịch Lấy Pin</h2>
+                <h2>Bạn có muốn đổi pin?</h2>
                 <p>Pin #{selectedBattery.serialNumber || selectedBattery.id}</p>
               </div>
               <button className="schedule-modal-close-btn" onClick={closeScheduleModal}>✕</button>
             </div>
 
             <div className="schedule-battery-info">
-              <h3>Thông tin pin</h3>
               <div className="schedule-info-grid">
                 <div className="schedule-info-item">
                   <span className="schedule-info-label">Dung lượng</span>
@@ -262,25 +331,105 @@ export default function Station() {
               </div>
             </div>
 
-            <div className="schedule-time-section">
-              <div className="time-input-group">
-                <label>Thời gian lấy pin dự kiến</label>
-                <div className="time-input-wrapper">
-                  <input
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                  />
+            <div style={{ marginTop: '20px', textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>Hình thức đổi pin</label>
+              <div style={{ display: 'flex', borderRadius: '8px', border: '2px solid #e5e7eb', overflow: 'hidden', marginBottom: isScheduling ? '15px' : '0' }}>
+                <div 
+                  onClick={() => setIsScheduling(false)}
+                  style={{ flex: 1, padding: '10px', textAlign: 'center', cursor: 'pointer', fontWeight: 600, backgroundColor: !isScheduling ? '#2563eb' : 'transparent', color: !isScheduling ? 'white' : '#6b7280', transition: 'all 0.2s' }}
+                >
+                  Trực tiếp
+                </div>
+                <div 
+                  onClick={() => setIsScheduling(true)}
+                  style={{ flex: 1, padding: '10px', textAlign: 'center', cursor: 'pointer', fontWeight: 600, backgroundColor: isScheduling ? '#2563eb' : 'transparent', color: isScheduling ? 'white' : '#6b7280', transition: 'all 0.2s' }}
+                >
+                  Đặt lịch
                 </div>
               </div>
             </div>
 
-            <div className="schedule-modal-actions">
-              <button className="schedule-modal-btn secondary" onClick={closeScheduleModal}>Hủy</button>
-              <button className="schedule-modal-btn primary" onClick={handleConfirmSchedule} disabled={!scheduleTime}>
-                Xác Nhận Đặt Lịch
+            {isScheduling && (
+              <div style={{ textAlign: 'left', marginTop: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>Chọn thời gian dự kiến đến đổi pin</label>
+                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {[
+                    { label: '30p', minutes: 30 },
+                    { label: '1h', minutes: 60 },
+                    { label: '1.5h', minutes: 90 },
+                    { label: '2h', minutes: 120 }
+                  ].map((preset) => (
+                    <button 
+                      key={preset.minutes}
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setMinutes(d.getMinutes() + preset.minutes);
+                        const tzOffset = d.getTimezoneOffset() * 60000;
+                        const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+                        setScheduleTime(localISOTime);
+                      }}
+                      style={{ 
+                        padding: '6px 12px', 
+                        borderRadius: '16px', 
+                        border: '1px solid #d1d5db', 
+                        background: '#f3f4f6', 
+                        fontSize: '13px', 
+                        cursor: 'pointer',
+                        color: '#4b5563',
+                        fontWeight: 500
+                      }}
+                    >
+                      +{preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <input 
+                  type="datetime-local" 
+                  value={scheduleTime} 
+                  onChange={(e) => setScheduleTime(e.target.value)} 
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '2px solid #e5e7eb', fontSize: '15px' }} 
+                />
+              </div>
+            )}
+
+            <div className="schedule-modal-actions" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <button className="schedule-modal-btn secondary" style={{ flex: 1 }} onClick={closeScheduleModal}>Hủy</button>
+              <button className="schedule-modal-btn primary" style={{ flex: 1 }} onClick={() => handleConfirmSwap(isScheduling)}>
+                Xác nhận
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {feedbackModal && (
+        <div style={{ position: 'fixed', top: '80px', right: '20px', zIndex: 10000, animation: 'fadeInDown 0.3s ease-out' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'flex-start', gap: '16px', minWidth: '300px', borderLeft: feedbackModal.type === 'success' ? '4px solid #16a34a' : '4px solid #dc2626' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: feedbackModal.type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {feedbackModal.type === 'success' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                {feedbackModal.type === 'success' ? 'Thành công' : 'Thất bại'}
+              </h3>
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '13px' }}>
+                {feedbackModal.message}
+              </p>
+            </div>
+            <button 
+              onClick={() => setFeedbackModal(null)} 
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
           </div>
         </div>
       )}

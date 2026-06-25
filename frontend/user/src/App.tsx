@@ -23,6 +23,7 @@ import MembershipBenefits from './pages/MembershipBenefits';
 import FAQ from './pages/FAQ';
 import Policies from './pages/Policies';
 import NearestStations from './pages/NearestStations';
+import SwapHistory from './pages/SwapHistory';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/topup" element={<Topup />} />
           <Route path="/rent" element={<RentPin />} />
           <Route path="/history" element={<RentalHistory />} />
+          <Route path="/swap-history" element={<SwapHistory />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/book" element={<Book />} />
           <Route path="/station" element={<Station />} />

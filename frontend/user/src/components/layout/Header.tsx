@@ -402,26 +402,6 @@ export default function Header() {
                 Đăng ký gói dịch vụ
               </Link>
             </li>
-            <li className="has-sub">
-              <Link to="/book" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                Đặt lịch
-              </Link>
-              <ul className="submenu" style={{ top: '100%', left: 0, right: 'auto', minWidth: '220px', padding: '10px 0' }}>
-                <li>
-                  <Link to="/nearest-stations" style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1f2937' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    Tìm kiếm trạm gần nhất
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/book" style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1f2937' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    Đặt lịch đổi pin
-                  </Link>
-                </li>
-              </ul>
-            </li>
           </ul>
         </nav>
 
@@ -534,6 +514,12 @@ export default function Header() {
                       <Link to="/history" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         Lịch sử giao dịch
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/swap-history" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Lịch sử đổi pin
                       </Link>
                     </li>
                     <li>

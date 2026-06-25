@@ -6,6 +6,7 @@ import BatteryInventory from "./pages/BatteryInventory";
 import StationManagement from "./pages/StationManagement";
 import StationDetail from "./pages/StationDetail";
 import BatterySwap from "./pages/BatterySwap";
+import SwapHistory from "./pages/SwapHistory";
 import Revenue from "./pages/Revenue";
 import Profile from "./pages/Profile";
 import Login from "./pages/Auth/Login";
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="/stations" element={<StationManagement />} />
                 <Route path="/stations/:id" element={<StationDetail />} />
                 <Route path="/swap" element={<BatterySwap />} />
+                <Route path="/swap-history" element={<SwapHistory />} />
                 <Route path="/revenue" element={<Revenue />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>

@@ -39,7 +39,10 @@ const navItems: NavItem[] = [
   {
     icon: <TableIcon />,
     name: "Giao dịch đổi pin",
-    path: "/swap",
+    subItems: [
+      { name: "Hàng đợi duyệt", path: "/swap" },
+      { name: "Lịch sử đổi pin", path: "/swap-history" }
+    ]
   }
 ];
 
