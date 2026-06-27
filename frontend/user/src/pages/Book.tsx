@@ -250,7 +250,7 @@ export default function Book() {
                   </select>
                 </div>
 
-                <div className="form-row" style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+                <div className="form-row" style={{ display: 'flex', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
                   <label className="field" style={{ flex: 1, marginBottom: 0 }}>
                     <span className="label">Thời gian bắt đầu</span>
                     <input type="datetime-local" required value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontFamily: 'inherit' }} />

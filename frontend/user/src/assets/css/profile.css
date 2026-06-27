@@ -275,24 +275,81 @@
 }
 
 /* Responsive Fixes */
+@media (max-width: 768px) {
+  .profile-content-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
 @media (max-width: 640px) {
   .profile-hero {
     height: 200px;
   }
   .profile-container {
     margin-top: -80px;
+    padding: 0 16px;
   }
   .profile-main-card {
-    padding: 32px 24px;
+    padding: 32px 20px;
+    border-radius: 20px;
   }
   .avatar-circle-large {
     width: 100px;
     height: 100px;
+    border-width: 4px;
+    margin-bottom: 16px;
   }
   .avatar-text {
-    font-size: 40px;
+    font-size: 36px;
   }
   .profile-name {
     font-size: 24px;
+  }
+  .profile-avatar-section {
+    margin-top: -80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-hero {
+    height: 160px;
+  }
+  .profile-container {
+    margin-top: -60px;
+    padding: 0 12px;
+  }
+  .profile-main-card {
+    padding: 24px 16px;
+  }
+  .avatar-circle-large {
+    width: 80px;
+    height: 80px;
+  }
+  .avatar-text {
+    font-size: 28px;
+  }
+  .avatar-badge {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+  }
+  .profile-name {
+    font-size: 20px;
+  }
+  .profile-role-badge {
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+  .info-group-header h2 {
+    font-size: 18px;
+  }
+  .info-row-value {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+  .btn-glow {
+    padding: 14px 20px;
+    font-size: 15px;
   }
 }

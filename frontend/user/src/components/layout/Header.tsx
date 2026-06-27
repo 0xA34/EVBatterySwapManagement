@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 export default function Header() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function Header() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [supportForm, setSupportForm] = useState({ title: '', content: '' });
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,6 +369,8 @@ export default function Header() {
     }
   };
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <header className="site-header site-header-user">
       <div className="container header-inner">
@@ -375,9 +378,22 @@ export default function Header() {
           <img src="/favicon.ico" alt="ChargeX" className="brand-logo" style={{ height: '32px', width: 'auto' }} />
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginTop: '2px' }}>ChargeX</span>
         </Link>
+        
+        <button 
+          className="nav-toggle" 
+          id="navToggle" 
+          aria-label="Menu"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          )}
+        </button>
 
         <nav className="main-nav">
-          <ul id="menu" className="menu">
+          <ul id="menu" className={`menu ${isMobileMenuOpen ? 'active' : ''}`}>
             <li>
               <Link to={isLoggedIn ? "/my" : "/"} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -600,6 +616,22 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Sub Header Navigation for Mobile */}
+      <nav className="sub-header-nav">
+        <Link to={isLoggedIn ? "/my" : "/"} className={`sub-nav-item ${(location.pathname === '/' || location.pathname === '/my') ? 'active' : ''}`}>
+          <span>Trang chủ</span>
+        </Link>
+        <Link to="/dashboard" className={`sub-nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
+          <span>Đổi pin</span>
+        </Link>
+        <Link to="/contact-links" className={`sub-nav-item ${location.pathname === '/contact-links' ? 'active' : ''}`}>
+          <span>Liên kết</span>
+        </Link>
+        <Link to="/packages" className={`sub-nav-item ${location.pathname === '/packages' ? 'active' : ''}`}>
+          <span>Đăng ký gói</span>
+        </Link>
+      </nav>
     </header>
   );
 }

@@ -790,3 +790,86 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+/* ===== MOBILE RESPONSIVE OVERRIDES (≤1023px) ===== */
+
+/* Tablet: reduce overall spacing */
+@media (max-width: 1023px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure tables inside overflow containers have min-width */
+  .overflow-x-auto > table {
+    min-width: 700px;
+  }
+}
+
+/* Phone landscape & small tablet (≤768px) */
+@media (max-width: 768px) {
+  /* Global content padding reduction */
+  .p-4 { padding: 0.75rem !important; }
+  .p-6 { padding: 1rem !important; }
+  .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .py-5 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  
+  /* Typography scaling */
+  .text-2xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+  .text-3xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+  
+  /* Gap reduction */
+  .gap-6 { gap: 1rem !important; }
+  .gap-4 { gap: 0.75rem !important; }
+  .space-y-6 > * + * { margin-top: 1rem !important; }
+  
+  /* Cards: reduce border-radius on mobile */
+  .rounded-3xl { border-radius: 1rem !important; }
+  
+  /* Force KPI cards grid to 2 columns on mobile */
+  .grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Chart container: reduce min-height */
+  .min-h-\\[350px\\] {
+    min-height: 250px !important;
+  }
+  
+  /* Modal: full width on mobile */
+  .max-w-2xl {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+/* Phone portrait (≤480px) */
+@media (max-width: 480px) {
+  /* Even more compact */
+  .p-4 { padding: 0.625rem !important; }
+  .p-6 { padding: 0.75rem !important; }
+  .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  
+  .text-2xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+  .text-lg { font-size: 0.9375rem !important; }
+  
+  /* Force KPI cards to single column on very small phones */
+  .grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Chart: even smaller */
+  .min-h-\\[350px\\] {
+    min-height: 200px !important;
+  }
+  
+  /* Buttons: ensure touch target */
+  button, a[role="button"], .btn {
+    min-height: 44px;
+  }
+  
+  /* Table cells: reduce padding */
+  td, th {
+    padding: 0.5rem 0.625rem !important;
+    font-size: 0.8125rem !important;
+  }
+}

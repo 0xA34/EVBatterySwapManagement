@@ -120,8 +120,8 @@ export default function Dashboard() {
           Tra cứu trạm pin theo khu vực
         </div>
 
-        <div className="search-grid" style={{ display: 'flex', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
+        <div className="search-grid" style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
             <div style={{ marginBottom: '6px' }}><label style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>Tỉnh/TP</label></div>
             <div style={{ position: 'relative' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
@@ -155,7 +155,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             type="text"
             placeholder="Nhập tên trạm hoặc địa chỉ..."
@@ -167,7 +167,9 @@ export default function Dashboard() {
               border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '13px',
-              width: '250px',
+              width: '100%',
+              minWidth: '200px',
+              flex: '1',
               outline: 'none',
               backgroundColor: '#f9fafb',
               color: '#1f2937'
