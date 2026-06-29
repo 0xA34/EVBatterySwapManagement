@@ -7,7 +7,7 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 export default function GeneralNotifications() {
   const { token } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [targetAudience, setTargetAudience] = useState("ALL_USERS");
