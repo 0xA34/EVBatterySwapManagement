@@ -1,3 +1,4 @@
+import { getApiUrl } from '../utils/api';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -29,7 +30,7 @@ export default function ChangePassword() {
     }
 
     try {
-      const response = await fetch(`/api/update-password?oldPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`, {
+      const response = await fetch(getApiUrl(`/api/update-password?oldPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getApiUrl } from '../utils/api';
 
-const PROVINCE_API = 'http://localhost:8080/api/donvihanhchinh/tinhThanh';
-const DISTRICT_API = 'http://localhost:8080/api/donvihanhchinh/quanHuyen';
-const WARD_API = 'http://localhost:8080/api/donvihanhchinh/phuongXa';
+const PROVINCE_API = getApiUrl('/api/donvihanhchinh/tinhThanh');
+const DISTRICT_API = getApiUrl('/api/donvihanhchinh/quanHuyen');
+const WARD_API = getApiUrl('/api/donvihanhchinh/phuongXa');
 
 export default function Dashboard() {
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -30,7 +31,7 @@ export default function Dashboard() {
 
   const fetchStations = async () => {
     try {
-      let url = `http://localhost:8080/api/station/page?page=${page}&size=${size}`;
+      let url = getApiUrl(`/api/station/page?page=${page}&size=${size}`);
       if (searchFilter.province) url += `&province=${searchFilter.province}`;
       if (searchFilter.district) url += `&quan=${searchFilter.district}`;
       if (searchFilter.ward) url += `&phuongxa=${searchFilter.ward}`;

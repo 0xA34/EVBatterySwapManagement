@@ -1,3 +1,4 @@
+import { getApiUrl } from '../utils/api';
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import '../assets/css/station.css';
@@ -17,7 +18,7 @@ export default function Station() {
 
   const fetchBatteries = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/battery/page?page=${page}&size=${size}&stationId=${stationId}`, {
+      const response = await fetch(getApiUrl(`/api/battery/page?page=${page}&size=${size}&stationId=${stationId}`), {
         headers: {
           'accept': '*/*'
         }
@@ -35,7 +36,7 @@ export default function Station() {
   useEffect(() => {
     const fetchStationInfo = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/station/page?page=0&size=1000`, {
+        const response = await fetch(getApiUrl(`/api/station/page?page=0&size=1000`), {
           headers: { 'accept': '*/*' }
         });
         if (response.ok) {
@@ -123,7 +124,7 @@ export default function Station() {
         payload.scheduledAt = scheduledAtIso;
       }
 
-      const response = await fetch(`http://localhost:8080${endpoint}`, {
+      const response = await fetch(getApiUrl(`${endpoint}`), {
         method: 'POST',
         headers: {
           'accept': '*/*',

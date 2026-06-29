@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../utils/api';
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -11,6 +12,22 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const notifRef = React.useRef<HTMLDivElement>(null);
+  const avatarRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
+      if (avatarRef.current && !avatarRef.current.contains(event.target as Node)) {
+        setIsAvatarOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supportForm.title.trim() || !supportForm.content.trim()) return;
@@ -22,7 +39,7 @@ export default function Header() {
     }
 
     try {
-      const response = await fetch('/api/driver/support-tickets', {
+      const response = await fetch(getApiUrl('/api/driver/support-tickets'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +127,7 @@ export default function Header() {
       return;
     }
     try {
-      const response = await fetch('/api/driver/notifications?page=0&size=15', {
+      const response = await fetch(getApiUrl('/api/driver/notifications?page=0&size=15'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -128,7 +145,7 @@ export default function Header() {
     const token = localStorage.getItem('user_token');
     if (!token || isTokenExpired(token)) return;
     try {
-      const response = await fetch('/api/driver/notifications/read-all', {
+      const response = await fetch(getApiUrl('/api/driver/notifications/read-all'), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -147,7 +164,7 @@ export default function Header() {
     const token = localStorage.getItem('user_token');
     if (!token || isTokenExpired(token)) return;
     try {
-      const response = await fetch(`/api/driver/notifications/${id}/read`, {
+      const response = await fetch(getApiUrl(`/api/driver/notifications/${id}/read`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -156,7 +173,7 @@ export default function Header() {
       if (response.ok) {
         setNotificationsList(prev => prev.map(item => item.id === id ? { ...item, isRead: true } : item));
         // Update count
-        const countResp = await fetch('/api/driver/notifications/unread-count', {
+        const countResp = await fetch(getApiUrl('/api/driver/notifications/unread-count'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -176,7 +193,7 @@ export default function Header() {
       const token = localStorage.getItem('user_token');
       if (!token || isTokenExpired(token)) return;
       try {
-        const response = await fetch('/api/info', {
+        const response = await fetch(getApiUrl('/api/info'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -205,7 +222,7 @@ export default function Header() {
       const token = localStorage.getItem('user_token');
       if (!token || isTokenExpired(token)) return;
       try {
-        const response = await fetch('/api/driver/notifications/unread-count', {
+        const response = await fetch(getApiUrl('/api/driver/notifications/unread-count'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -342,7 +359,7 @@ export default function Header() {
     const token = localStorage.getItem('user_token');
     if (token) {
       try {
-        await fetch('/api/auth/logout', {
+        await fetch(getApiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -401,7 +418,7 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link to={isLoggedIn ? "/dashboard" : "/login"} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 Đổi pin
               </Link>
@@ -423,7 +440,7 @@ export default function Header() {
 
         {isLoggedIn ? (
           <div className="header-actions">
-            <div className="notification-container">
+            <div className="notification-container" ref={notifRef}>
               <button
                 id="notifBtn"
                 className="notification-bell"
@@ -493,7 +510,7 @@ export default function Header() {
                 <span className="money-amount">{walletBalance}</span>
               </div>
 
-              <div className="has-sub">
+              <div className="has-sub" ref={avatarRef}>
                 <div
                   aria-label="Tài khoản"
                   onClick={() => setIsAvatarOpen(!isAvatarOpen)}
@@ -622,7 +639,7 @@ export default function Header() {
         <Link to={isLoggedIn ? "/my" : "/"} className={`sub-nav-item ${(location.pathname === '/' || location.pathname === '/my') ? 'active' : ''}`}>
           <span>Trang chủ</span>
         </Link>
-        <Link to="/dashboard" className={`sub-nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
+        <Link to={isLoggedIn ? "/dashboard" : "/login"} className={`sub-nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
           <span>Đổi pin</span>
         </Link>
         <Link to="/contact-links" className={`sub-nav-item ${location.pathname === '/contact-links' ? 'active' : ''}`}>

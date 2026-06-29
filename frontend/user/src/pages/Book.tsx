@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../assets/css/book.css';
+import { getApiUrl } from '../utils/api';
 
-const PROVINCE_API = 'http://localhost:8080/api/donvihanhchinh/tinhThanh';
-const DISTRICT_API = 'http://localhost:8080/api/donvihanhchinh/quanHuyen';
-const WARD_API = 'http://localhost:8080/api/donvihanhchinh/phuongXa';
+const PROVINCE_API = getApiUrl('/api/donvihanhchinh/tinhThanh');
+const DISTRICT_API = getApiUrl('/api/donvihanhchinh/quanHuyen');
+const WARD_API = getApiUrl('/api/donvihanhchinh/phuongXa');
 
 export default function Book() {
   const [provinces, setProvinces] = useState<any[]>([]);

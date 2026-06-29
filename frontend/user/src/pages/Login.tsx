@@ -1,3 +1,4 @@
+import { getApiUrl } from '../utils/api';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -18,7 +19,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(getApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,6 +60,7 @@ export default function Login() {
       navigate('/my');
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi kết nối máy chủ.');
+      setFormData(prev => ({ ...prev, password: '' }));
     } finally {
       setIsLoading(false);
     }

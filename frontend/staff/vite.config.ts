@@ -14,7 +14,16 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: process.env.API_URL || "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
   define: {
     global: 'globalThis',
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.API_URL || 'http://localhost:8080')
   },
 });

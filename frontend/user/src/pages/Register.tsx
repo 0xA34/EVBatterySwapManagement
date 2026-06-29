@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const API_BASE = 'http://localhost:8080';
+import { getApiUrl } from '../utils/api';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -73,7 +72,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
+      const response = await fetch(getApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Accept': '*/*',

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../utils/api';
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import '../assets/css/profile.css';
@@ -26,7 +27,7 @@ export default function Profile() {
       const token = localStorage.getItem('user_token');
       if (!token) return;
       try {
-        const response = await fetch('/api/info', {
+        const response = await fetch(getApiUrl('/api/info'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -74,7 +75,7 @@ export default function Profile() {
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/update-password?oldPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`, {
+      const response = await fetch(getApiUrl(`/api/update-password?oldPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

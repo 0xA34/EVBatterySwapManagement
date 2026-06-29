@@ -1,3 +1,4 @@
+import { getApiUrl } from '../utils/api';
 import React, { useState } from 'react';
 import { Wallet, CreditCard, CheckCircle2, Info, Copy } from 'lucide-react';
 import '../assets/css/topup.css';
@@ -14,7 +15,7 @@ export default function Topup() {
       const token = localStorage.getItem('user_token');
       if (!token) return;
       try {
-        const response = await fetch('/api/info', {
+        const response = await fetch(getApiUrl('/api/info'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
