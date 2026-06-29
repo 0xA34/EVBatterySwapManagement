@@ -30,14 +30,10 @@ export default function App() {
             <Route path="/signup" element={<SignUp />} />
           </Route>
 
-          {/* Unprotected Dashboard Layout (Home Page only) */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-          </Route>
-
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             {/* Dashboard Layout */}
             <Route element={<AppLayout />}>
+              <Route index path="/" element={<Home />} />
               {/* ChargeX */}
               <Route path="/stations" element={<StationManagement />} />
               <Route path="/users" element={<UserManagement />} />
