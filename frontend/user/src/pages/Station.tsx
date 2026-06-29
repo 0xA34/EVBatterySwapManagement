@@ -9,7 +9,7 @@ export default function Station() {
 
   const [batteries, setBatteries] = useState<any[]>([]);
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(9);
+  const [size] = useState(9);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
