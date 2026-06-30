@@ -10,6 +10,11 @@ import com.team4tech.evbatteryswap.repository.BatteryRepository;
 import com.team4tech.evbatteryswap.repository.BatterySwapOrderRepository;
 import com.team4tech.evbatteryswap.repository.StationRepository;
 import com.team4tech.evbatteryswap.repository.UserRepository;
+import com.team4tech.evbatteryswap.repository.WalletTransactionRepository;
+import com.team4tech.evbatteryswap.service.interfaces.IVoucherService;
+import com.team4tech.evbatteryswap.entity.WalletTransaction;
+import com.team4tech.evbatteryswap.entity.enums.TransactionType;
+import com.team4tech.evbatteryswap.entity.Voucher;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -35,6 +41,9 @@ public class SwapOrderService {
     private final UserRepository userRepository;
     private final BatteryDiagnosticsService diagnosticsService;
     private final NotificationService notificationService;
+    private final IVoucherService voucherService;
+    private final WalletTransactionRepository walletTransactionRepository;
+    private final StationTransactionService stationTransactionService;
 
     @Transactional
     public SwapOrderResponse createBooking(String username, SwapOrderRequest request) {
@@ -72,6 +81,9 @@ public class SwapOrderService {
         order.setStatus("PENDING");
         order.setScheduledAt(scheduledAt);
         order.setExpiresAt(scheduledAt);
+
+        processPayment(order, request, driver);
+
         orderRepository.save(order);
 
         log.info("[Order] Driver '{}' created BOOKING #{} at station '{}', battery #{} RESERVED, scheduled={}",
@@ -102,6 +114,9 @@ public class SwapOrderService {
         order.setNewBattery(newBattery);
         order.setOrderType("DIRECT_SWAP");
         order.setStatus("PENDING");
+
+        processPayment(order, request, driver);
+
         orderRepository.save(order);
 
         log.info("[Order] Driver '{}' created DIRECT_SWAP #{} at station '{}'",
@@ -123,6 +138,11 @@ public class SwapOrderService {
         if ("DIRECT_SWAP".equals(order.getOrderType())) {
             executeSwap(order);
             order.setStatus("COMPLETED");
+            
+            stationTransactionService.recordTransaction(
+                order.getStation(), order, order.getFinalPrice(), "SWAP_REVENUE", "Doanh thu đổi pin trực tiếp"
+            );
+            
             orderRepository.save(order);
 
             notificationService.createAndSend(
@@ -162,6 +182,11 @@ public class SwapOrderService {
 
         executeSwap(order);
         order.setStatus("COMPLETED");
+        
+        stationTransactionService.recordTransaction(
+            order.getStation(), order, order.getFinalPrice(), "SWAP_REVENUE", "Doanh thu đặt lịch đổi pin"
+        );
+        
         orderRepository.save(order);
 
         notificationService.createAndSend(
@@ -185,6 +210,7 @@ public class SwapOrderService {
         }
 
         releaseReservedBattery(order);
+        processRefund(order);
 
         order.setStatus("REJECTED");
         order.setRejectReason(reason);
@@ -217,6 +243,7 @@ public class SwapOrderService {
         }
 
         releaseReservedBattery(order);
+        processRefund(order);
 
         order.setStatus("CANCELLED");
         orderRepository.save(order);
@@ -273,6 +300,8 @@ public class SwapOrderService {
         List<BatterySwapOrder> expired = orderRepository.findExpiredBookings(Instant.now());
         for (BatterySwapOrder order : expired) {
             releaseReservedBattery(order);
+            processRefund(order);
+            
             order.setStatus("CANCELLED");
             order.setRejectReason("Hết thời gian chờ (3 tiếng).");
             orderRepository.save(order);
@@ -392,6 +421,75 @@ public class SwapOrderService {
 
         for (User staff : staffList) {
             notificationService.createAndSend(staff, title, message, "NEW_SWAP_ORDER");
+        }
+    }
+
+    private void processPayment(BatterySwapOrder order, SwapOrderRequest request, User driver) {
+        BigDecimal basePrice = new BigDecimal("9000.00");
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        Voucher voucher = null;
+
+        if (request.getVoucherCode() != null && !request.getVoucherCode().trim().isEmpty()) {
+            voucher = voucherService.validateAndGetVoucher(request.getVoucherCode());
+            if (voucher.getMinOrderValue() != null && basePrice.compareTo(voucher.getMinOrderValue()) < 0) {
+                throw new IllegalArgumentException("Đơn hàng không đạt giá trị tối thiểu để áp dụng mã giảm giá.");
+            }
+
+            if ("PERCENTAGE".equalsIgnoreCase(voucher.getDiscountType())) {
+                discountAmount = basePrice.multiply(voucher.getDiscountValue()).divide(new BigDecimal("100"));
+            } else {
+                discountAmount = voucher.getDiscountValue();
+            }
+
+            if (discountAmount.compareTo(basePrice) > 0) {
+                discountAmount = basePrice;
+            }
+        }
+
+        BigDecimal finalPrice = basePrice.subtract(discountAmount);
+
+        if (driver.getWalletBalance() == null || driver.getWalletBalance().compareTo(finalPrice) < 0) {
+            throw new IllegalStateException("Số dư ví không đủ để thực hiện thanh toán (" + finalPrice + " VNĐ). Vui lòng nạp thêm tiền.");
+        }
+
+        // Deduct money
+        driver.setWalletBalance(driver.getWalletBalance().subtract(finalPrice));
+        userRepository.save(driver);
+
+        // Record transaction
+        WalletTransaction transaction = new WalletTransaction();
+        transaction.setUser(driver);
+        transaction.setAmount(finalPrice.negate());
+        transaction.setType(TransactionType.PAYMENT_DEDUCTION);
+        transaction.setDescription("Thanh toán " + order.getOrderType() + " cho trạm " + order.getStation().getName());
+        walletTransactionRepository.save(transaction);
+
+        // Increment voucher usage
+        if (voucher != null) {
+            voucherService.incrementUseCount(voucher);
+        }
+
+        order.setBasePrice(basePrice);
+        order.setDiscountAmount(discountAmount);
+        order.setFinalPrice(finalPrice);
+        order.setVoucher(voucher);
+    }
+
+    private void processRefund(BatterySwapOrder order) {
+        if (order.getFinalPrice() != null && order.getFinalPrice().compareTo(BigDecimal.ZERO) > 0) {
+            User driver = order.getDriver();
+            if (driver.getWalletBalance() == null) {
+                driver.setWalletBalance(BigDecimal.ZERO);
+            }
+            driver.setWalletBalance(driver.getWalletBalance().add(order.getFinalPrice()));
+            userRepository.save(driver);
+
+            WalletTransaction transaction = new WalletTransaction();
+            transaction.setUser(driver);
+            transaction.setAmount(order.getFinalPrice());
+            transaction.setType(TransactionType.REFUND);
+            transaction.setDescription("Hoàn tiền " + order.getOrderType() + " do hủy/từ chối/hết hạn lệnh #" + order.getId());
+            walletTransactionRepository.save(transaction);
         }
     }
 }

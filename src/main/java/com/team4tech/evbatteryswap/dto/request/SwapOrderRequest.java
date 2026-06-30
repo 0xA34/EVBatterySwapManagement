@@ -22,6 +22,8 @@ public class SwapOrderRequest {
 
     private Instant scheduledAt;
 
+    private String voucherCode;
+
     public BigDecimal effectiveMinCharge() {
         return minChargePercent != null ? minChargePercent : new BigDecimal("80");
     }
