@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Giám sát 3D - Trạm Đổi Pin EV Chuẩn Định Vị</title>
+
+    <!-- MapLibre GL JS CSS -->
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --dark-slate: #1e293b;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --bg-panel: rgba(255, 255, 255, 0.92);
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            color: var(--text-main);
+            background-color: #f1f5f9;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        /* ==================== BẢNG ĐIỀU KHIỂN RESPONSIVE ==================== */
+        .status-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            width: 320px;
+            box-sizing: border-box;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark-slate);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 20px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #cbd5e1;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-badge.active {
+            color: #15803d;
+            background: #dcfce7;
+        }
+
+            .status-badge.active .status-dot {
+                background-color: var(--success);
+                animation: blink 1.2s infinite;
+            }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .panel-section {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+            .panel-section label {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+        /* UI Controls tinh chỉnh */
+        .style-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: #fff;
+            font-size: 14px;
+            color: var(--dark-slate);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+            .style-select:focus {
+                border-color: var(--primary);
+            }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background-color 0.15s, transform 0.1s;
+        }
+
+            .action-btn:hover {
+                background-color: var(--primary-hover);
+            }
+
+            .action-btn:active {
+                transform: scale(0.98);
+            }
+
+        /* Custom lại bộ nút zoom mặc định của MapLibre cho đồng bộ */
+        .maplibregl-ctrl-group {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        /* ==================== ĐỊNH DẠNG TRÊN ĐIỆN THOẠI (MOBILE BOTTOM SHEET) ==================== */
+        @media (max-width: 768px) {
+            .status-panel {
+                top: auto;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                max-height: 50vh;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+                padding: 16px 20px 24px 20px;
+                border: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.6);
+            }
+
+                /* Thanh kéo giả lập giao diện trượt native */
+                .status-panel::before {
+                    content: '';
+                    display: block;
+                    width: 36px;
+                    height: 4px;
+                    background: #cbd5e1;
+                    border-radius: 2px;
+                    margin: -4px auto 12px auto;
+                }
+
+            .panel-container-mobile {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .panel-section {
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+            }
+
+            .mobile-full-width {
+                grid-column: span 2;
+            }
+        }
+
+        /* ==================== UPGRADED: CẤU TRÚC ĐỒ HỌA MARKER 3D ISOMETRIC ==================== */
+        .ev-station-marker {
+            width: 70px !important;
+            height: 85px !important;
+            perspective: 1000px;
+        }
+
+        .ev-station-3d-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        /* Hiệu ứng radar quét xung quanh chân đế trạm */
+        .ev-station-3d-pulse-ring {
+            position: absolute;
+            bottom: 4px;
+            width: 52px;
+            height: 22px;
+            border: 2px solid var(--success);
+            border-radius: 50%;
+            transform: rotateX(55deg);
+            pointer-events: none;
+            animation: station-radar-sweep 2s infinite ease-out;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.7);
+        }
+
+        /* Khối kiến trúc Trạm đổi pin nhấp nhô nhẹ */
+        .ev-station-3d-kiosk {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            animation: station-bobbing 3.5s ease-in-out infinite;
+            filter: drop-shadow(0px 12px 14px rgba(15, 23, 42, 0.4));
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: bottom center;
+        }
+
+            .ev-station-3d-kiosk:hover {
+                transform: scale(1.15) translateY(-6px);
+                filter: drop-shadow(0px 18px 24px rgba(16, 185, 129, 0.5));
+            }
+
+        /* Hiệu ứng đèn LED nhấp nháy cho các slot pin */
+        .neon-flash-slow {
+            animation: neon-breathing 2.4s infinite ease-in-out;
+        }
+
+        .neon-flash-fast {
+            animation: neon-breathing 1.2s infinite ease-in-out;
+        }
+
+        /* ==================== ĐỊNH NGHĨA KEYFRAMES ANIMATIONS ==================== */
+        @keyframes station-bobbing {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-7px);
+            }
+        }
+
+        @keyframes station-radar-sweep {
+            0% {
+                transform: scale(0.3) rotateX(55deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.6) rotateX(55deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes neon-breathing {
+            0%, 100% {
+                opacity: 0.55;
+                filter: brightness(0.85) drop-shadow(0 0 1px currentColor);
+            }
+
+            50% {
+                opacity: 1;
+                filter: brightness(1.4) drop-shadow(0 0 6px currentColor);
+            }
+        }
+
+        /* Tối ưu hóa cụm la bàn/mũi tên định vị Chế độ lái xe */
+        .user-location-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            position: relative;
+        }
+
+        .user-car-arrow {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0px 4px 6px rgba(15, 23, 42, 0.3));
+            z-index: 2;
+        }
+
+        .user-pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--primary);
+            background-color: rgba(37, 99, 235, 0.15);
+            border-radius: 50%;
+            animation: geo-pulse 2.2s infinite ease-out;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes geo-pulse {
+            0% {
+                transform: scale(0.2);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1.6);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">📍 Giám sát GPS 3D</h3>
+            <div id="gps-badge" class="status-badge">
+                <span class="status-dot"></span><span id="badge-text">OFFLINE</span>
+            </div>
+        </div>
+
+        <div class="mobile-full-width">
+            <div id="info-text" class="info-card">Đang chờ quyền truy cập vị trí phần cứng...</div>
+        </div>
+
+        <div class="panel-container-mobile">
+            <!-- Điều khiển 1: Định vị -->
+            <div class="panel-section">
+                <label>Chế độ lái xe</label>
+                <button id="recenter-btn" class="action-btn">🎯 Bật bám đuôi</button>
+            </div>
+
+            <!-- Điều khiển 2: Thời tiết -->
+            <div class="panel-section">
+                <label>Thời tiết hiện tại</label>
+                <div id="weather-info" class="info-card" style="margin-bottom: 0; min-height: 40px; padding: 10px;">Chờ GPS...</div>
+            </div>
+
+            <!-- Điều khiển 3: Giao diện bản đồ -->
+            <div class="panel-section mobile-full-width" style="margin-top: 12px;">
+                <label for="style-selector">Bản đồ nền</label>
+                <select id="style-selector" class="style-select">
+                    <option value="https://tiles.openfreemap.org/styles/liberty">Liberty (Giao thông trực quan)</option>
+                    <option value="https://tiles.openfreemap.org/styles/bright">Bright (Mặc định sáng)</option>
+                    <option value="https://tiles.openfreemap.org/styles/positron">Positron (Tối giản thanh lịch)</option>
+                    <option value="https://tiles.openfreemap.org/styles/dark">Dark Matter (Chế độ ban đêm)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- MapLibre GL JS Core Script -->
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+    <script>
+        // 1. Dữ liệu mảng tọa độ các trạm đổi pin EV
+        const stations = [
+            { id: 1, name: "Trạm Đổi Pin EV - Gốc (Điểm B)", coords: [107.088435, 10.334680] },
+            { id: 2, name: "Trạm Đổi Pin EV - Trạm 2", coords: [107.088151, 10.333885] },
+            { id: 3, name: "Trạm Đổi Pin EV - Trạm 3", coords: [107.088556, 10.332463] },
+            { id: 4, name: "Trạm Đổi Pin EV - Trạm 4", coords: [107.087549, 10.331721] },
+            { id: 5, name: "Trạm Đổi Pin EV - Trạm 4", coords: [106.716544, 10.804478] }
+        ];
+
+        let currentCarCoords = null;
+        let previousCarCoords = null; // Lưu trữ tọa độ cũ để tính toán Bearing dự phòng
+        let targetStationCoords = stations[0].coords;
+        let currentRouteGeoJSON = null;
+        let hasFetchedRoute = false;
+        let isTracking = true; // Chế độ khóa camera tự động bám đuôi phương tiện mặc định kích hoạt
+
+        // 2. Khởi tạo bản đồ 3D nền
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [107.088435, 10.334680],
+            zoom: 16.5,
+            pitch: 68, // Góc nghiêng tối ưu góc nhìn Chế độ lái xe
+            bearing: 0,
+            antialias: true
+        });
+
+        // Khắc phục việc thiếu sprite ảnh nền của map source mở
+        map.on('styleimagemissing', (e) => {
+            const id = e.id;
+            const transparentPixel = new Uint8Array([0, 0, 0, 0]);
+            map.addImage(id, { width: 1, height: 1, data: transparentPixel });
+        });
+
+        // Tùy biến vị trí Control điều hướng phù hợp với cấu trúc Mobile/Desktop
+        const isMobile = window.innerWidth <= 768;
+        map.addControl(new maplibregl.NavigationControl(), isMobile ? 'top-left' : 'top-right');
+
+        // ==================== KHỞI TẠO MARKER CHẾ ĐỘ LÁI XE (MŨI TÊN CHỈ HƯỚNG) ====================
+        const elUserContainer = document.createElement('div');
+        elUserContainer.className = 'user-location-container';
+
+        // Thay thế Blue Dot bằng Mũi tên điều hướng 3D chỉ thẳng lên đỉnh bản đồ
+        const elUserArrow = document.createElement('div');
+        elUserArrow.className = 'user-car-arrow';
+        elUserArrow.innerHTML = `
+                    <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="#2563eb" fill-opacity="0.15"/>
+                        <circle cx="16" cy="16" r="9" fill="white"/>
+                        <path d="M16 5L24 23L16 18.5L8 23L16 5Z" fill="#2563eb" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>
+                    </svg>
+                `;
+
+        const elUserPulse = document.createElement('div');
+        elUserPulse.className = 'user-pulse-ring';
+
+        elUserContainer.appendChild(elUserArrow);
+        elUserContainer.appendChild(elUserPulse);
+
+        // ĐẶC TÍNH QUAN TRỌNG: rotationAlignment: 'map' để khóa mũi tên quay theo trục đường đi
+        const carMarker = new maplibregl.Marker({
+            element: elUserContainer,
+            anchor: 'center',
+            rotationAlignment: 'map',
+            pitchAlignment: 'map'
+        });
+
+        // ==================== HÀM TỰ TÍNH TOÁN GÓC PHƯƠNG VỊ (BEARING) ====================
+        function calculateBearing(lat1, lng1, lat2, lng2) {
+            const dLon = (lng2 - lng1) * Math.PI / 180;
+            const lat1Rad = lat1 * Math.PI / 180;
+            const lat2Rad = lat2 * Math.PI / 180;
+            const y = Math.sin(dLon) * Math.cos(lat2Rad);
+            const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+            const brng = Math.atan2(y, x) * 180 / Math.PI;
+            return (brng + 360) % 360;
+        }
+
+        // ==================== VÒNG LẶP RẢI HIỂN THỊ CÁC TRẠM ĐỔI PIN ====================
+        stations.forEach(station => {
+            const elStation = document.createElement('div');
+            elStation.className = 'ev-station-marker';
+            // UPGRADED: Tái cấu trúc ruột DOM sang Mô hình Kiosk 3D mặt phẳng chiếu nghiêng kết hợp LED Flash
+            elStation.innerHTML = `
+                    <div class="ev-station-3d-wrapper">
+                        <div class="ev-station-3d-pulse-ring"></div>
+                        <div class="ev-station-3d-kiosk">
+                            <svg width="60" height="75" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Đáy đổ bóng tiếp đất -->
+                                <ellipse cx="30" cy="66" rx="18" ry="5" fill="rgba(15, 23, 42, 0.35)" />
+
+                                <!-- MÁI TỦ (Isometric Roof Face) -->
+                                <path d="M30 12 L50 21 L30 30 L10 21 Z" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+
+                                <!-- VÁCH TRÁI TỦ TRẠM (Isometric Left Wall) -->
+                                <path d="M10 21 L30 30 L30 62 L10 53 Z" fill="#1e293b" />
+
+                                <!-- VÁCH PHẢI TRẠM CHỨA PIN (Isometric Right Wall) -->
+                                <path d="M30 30 L50 21 L50 53 L30 62 Z" fill="#0f172a" />
+
+                                <!-- Biểu tượng Tia chớp năng lượng ở mặt trái tủ -->
+                                <path d="M17 33 L22 33 L19 40 L23 40 L16 49 L18 43 L15 43 Z" fill="#fbbf24" style="filter: drop-shadow(0 0 3px #fbbf24);"/>
+
+                                <!-- CÁC HỘP ĐỔI PIN PHÍA MẶT PHẢI ĐÈN LED CHỚP NHÁY -->
+                                <!-- Slot hàng 1 - Trái (Đang sạc đầy - Đèn xanh) -->
+                                <path d="M33 31 L39 28 L39 34.5 L33 37.5 Z" fill="#111827" />
+                                <path d="M34 32 L38 30 L38 33.5 L34 35.5 Z" fill="#10b981" class="neon-flash-slow" />
+
+                                <!-- Slot hàng 1 - Phải (Sắp đầy - Đèn chớp nhanh) -->
+                                <path d="M41 27 L47 24 L47 30.5 L41 33.5 Z" fill="#111827" />
+                                <path d="M42 28 L46 26 L46 29.5 L42 31.5 Z" fill="#10b981" class="neon-flash-fast" />
+
+                                <!-- Slot hàng 2 - Trái (Sạc ổn định) -->
+                                <path d="M33 39.5 L39 36.5 L39 43 L33 46 Z" fill="#111827" />
+                                <path d="M34 40.5 L38 38.5 L38 42 L34 44 Z" fill="#10b981" class="neon-flash-fast" />
+
+                                <!-- Slot hàng 2 - Phải (Trống / Đang cấp dòng - Cyan) -->
+                                <path d="M41 35.5 L47 32.5 L47 39 L41 42 Z" fill="#111827" />
+                                <path d="M42 36.5 L46 34.5 L46 38 L42 40 Z" fill="#06b6d4" class="neon-flash-slow" />
+
+                                <!-- Slot hàng 3 - Trái (Đầy chuẩn sẵn sàng) -->
+                                <path d="M33 48 L39 45 L39 51.5 L33 54.5 Z" fill="#111827" />
+                                <path d="M34 49 L38 47 L38 50.5 L34 52.5 Z" fill="#10b981" class="neon-flash-slow" />
+
+                                <!-- Slot hàng 3 - Phải -->
+                                <path d="M41 44 L47 41 L47 47.5 L41 50.5 Z" fill="#111827" />
+                                <path d="M42 45 L46 43 L46 46.5 L42 48.5 Z" fill="#10b981" class="neon-flash-slow" />
+
+                                <!-- Đèn LED Panel chính chạy ngang phía trên nóc tủ -->
+                                <path d="M30 29.5 L50 20.5 L50 22 L30 31 Z" fill="#10b981" style="filter: drop-shadow(0 0 4px #10b981);" class="neon-flash-fast"/>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+
+            new maplibregl.Marker({
+                element: elStation,
+                anchor: 'bottom'
+            })
+                .setLngLat(station.coords)
+                .setPopup(new maplibregl.Popup({ offset: 36 }).setHTML(`<div style="font-family:sans-serif; padding:2px 4px;"><b>${station.name}</b><br><span style="color:#64748b; font-size:11px;">Tọa độ: ${station.coords[1]}, ${station.coords[0]}</span></div>`))
+                .addTo(map);
+
+            elStation.addEventListener('click', () => {
+                targetStationCoords = station.coords;
+                if (currentCarCoords) {
+                    getRoute(currentCarCoords, targetStationCoords);
+                }
+            });
+        });
+
+        const infoText = document.getElementById('info-text');
+        const gpsBadge = document.getElementById('gps-badge');
+        const badgeText = document.getElementById('badge-text');
+        const weatherInfo = document.getElementById('weather-info');
+        const recenterBtn = document.getElementById('recenter-btn');
+
+        // Vẽ tuyến đường đi tối ưu thông qua lớp Layer GeoJSON
+        function drawRouteLayer(geometry) {
+            if (!map.isStyleLoaded()) return;
+
+            if (map.getSource('route')) {
+                map.getSource('route').setData({
+                    type: 'Feature',
+                    properties: {},
+                    geometry: geometry
+                });
+            } else {
+                map.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: geometry
+                    }
+                });
+
+                map.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#2563eb',
+                        'line-width': 6,
+                        'line-opacity': 0.85
+                    }
+                });
+            }
+        }
+
+        // Gọi API công cụ định tuyến OSRM đường bộ
+        async function getRoute(start, end) {
+            const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.routes && data.routes.length > 0) {
+                    currentRouteGeoJSON = data.routes[0].geometry;
+                    drawRouteLayer(currentRouteGeoJSON);
+                }
+            } catch (error) {
+                console.error("Lỗi hệ thống định tuyến tuyến đường:", error);
+            }
+        }
+
+        // Tích hợp đồng bộ dữ liệu thời tiết thực tế tự động
+        async function getWeather(latitude, longitude) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.current_weather) {
+                    const temp = data.current_weather.temperature;
+                    const weathercode = data.current_weather.weathercode;
+                    const condition = parseWeatherCode(weathercode);
+
+                    weatherInfo.innerHTML = `<b>${condition}</b><br>${temp}°C`;
+                } else {
+                    weatherInfo.innerText = "N/A";
+                }
+            } catch (error) {
+                weatherInfo.innerText = "Lỗi kết nối";
+            }
+        }
+
+        function parseWeatherCode(code) {
+            if (code === 0) return "Trời quang đãng ☀️";
+            if ([1, 2, 3].includes(code)) return "Nắng rải rác ⛅";
+            if ([45, 48].includes(code)) return "Sương mù 🌫️";
+            if ([51, 53, 55, 56, 57].includes(code)) return "Mưa phùn nhẹ 🌧️";
+            if ([61, 63, 65, 66, 67].includes(code)) return "Mưa lớn 🌧️";
+            if ([80, 81, 82].includes(code)) return "Mưa rào nhẹ 🌦️";
+            if ([95, 96, 99].includes(code)) return "Có dông sét ⌁ ⛈️";
+            return "Mây thay đổi";
+        }
+
+        // Chuyển đổi linh hoạt style giao diện nền bản đồ
+        document.getElementById('style-selector').addEventListener('change', function (e) {
+            map.setStyle(e.target.value);
+        });
+
+        map.on('style.load', () => {
+            if (currentRouteGeoJSON) {
+                drawRouteLayer(currentRouteGeoJSON);
+            }
+        });
+
+        // Hủy bám đuôi camera nếu người dùng chủ động tương tác cuộn/kéo sang khu vực khác
+        map.on('dragstart', () => {
+            isTracking = false;
+            recenterBtn.innerText = "🎯 Bật bám đuôi";
+            recenterBtn.style.backgroundColor = "var(--primary)";
+        });
+        map.on('zoomstart', () => {
+            isTracking = false;
+            recenterBtn.innerText = "🎯 Bật bám đuôi";
+            recenterBtn.style.backgroundColor = "var(--primary)";
+        });
+
+        // Sự kiện click nút định vị quay trở về tâm phương tiện xe
+        recenterBtn.addEventListener('click', () => {
+            if (currentCarCoords) {
+                isTracking = true;
+                recenterBtn.innerText = "🔒 Đang bám đuôi";
+                recenterBtn.style.backgroundColor = "var(--success)";
+
+                // Tính toán góc padding động tùy biến giao diện Mobile/Desktop lúc bấm nút
+                const bottomPadding = isMobile ? window.innerHeight * 0.38 : window.innerHeight * 0.25;
+
+                map.flyTo({
+                    center: currentCarCoords,
+                    zoom: 16.8,
+                    pitch: 68,
+                    padding: { top: 0, bottom: bottomPadding, left: 0, right: 0 },
+                    duration: 1000,
+                    essential: true
+                });
+            } else {
+                alert("Chưa nhận được tín hiệu luồng GPS từ thiết bị!");
+            }
+        });
+
+        // Theo dõi thu thập định vị thời gian thực liên tục (Real-time tracking loop)
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const lng = position.coords.longitude;
+                    const lat = position.coords.latitude;
+                    let heading = position.coords.heading;
+
+                    // Khởi tạo vector tọa độ mới
+                    const nextCarCoords = [lng, lat];
+
+                    // THUẬT TOÁN BÙ GÓC XOAY: Tự tính toán la bàn nếu thiết bị đứng yên hoặc không hỗ trợ cảm biến la bàn phần cứng
+                    if ((heading === null || heading === undefined || heading === 0) && currentCarCoords) {
+                        heading = calculateBearing(currentCarCoords[1], currentCarCoords[0], lat, lng);
+                    }
+                    heading = heading || 0;
+
+                    currentCarCoords = nextCarCoords;
+
+                    // Kích hoạt giao diện trạng thái Live
+                    gpsBadge.classList.add('active');
+                    badgeText.innerText = "LIVE GPS";
+                    if (isTracking) {
+                        recenterBtn.innerText = "🔒 Đang bám đuôi";
+                        recenterBtn.style.backgroundColor = "var(--success)";
+                    }
+
+                    infoText.innerHTML = `<b>Tọa độ:</b> ${lng.toFixed(5)}, ${lat.toFixed(5)}<br>` +
+                        `<b>Vận tốc:</b> ${position.coords.speed ? (position.coords.speed * 3.6).toFixed(0) + ' km/h' : '0 km/h'}`;
+
+                    // Gán vị trí phương tiện thực tế
+                    carMarker.setLngLat(currentCarCoords).addTo(map);
+
+                    // Xử lý luồng vẽ định tuyến và nạp thời tiết
+                    if (!hasFetchedRoute) {
+                        getRoute(currentCarCoords, targetStationCoords);
+                        getWeather(lat, lng);
+                        hasFetchedRoute = true;
+                    } else {
+                        getRoute(currentCarCoords, targetStationCoords);
+                    }
+
+                    // ĐIỀU PHỐI CAMERA CHẾ ĐỘ LÁI XE NÂNG CAO
+                    if (isTracking) {
+                        // Tính toán vùng đệm an toàn khu vực đáy màn hình (chừa khoảng trống cho Bottom Sheet trên Mobile)
+                        const targetBottomPadding = isMobile ? window.innerHeight * 0.38 : window.innerHeight * 0.25;
+
+                        map.easeTo({
+                            center: currentCarCoords,
+                            bearing: heading,      // Xoay bản đồ đồng bộ theo hướng đi của xe
+                            pitch: 68,            // Độ nghiêng nhìn xa góc rộng đường chân trời
+                            zoom: 16.8,           // Mức thu phóng chuẩn hiển thị ngã rẽ nội đô
+                            padding: { top: 0, bottom: targetBottomPadding, left: 0, right: 0 }, // Ép điểm xe nằm ở 1/3 góc dưới màn hình
+                            duration: 950,        // Giãn biên độ trượt 950ms trùng khớp tần suất cập nhật dữ liệu của chip GPS (1Hz)
+                            easing: (t) => t      // Hàm gia tốc tuyến tính (Linear) giúp triệt tiêu hiện tượng camera giật khựng
+                        });
+                    }
+                },
+                (error) => {
+                    gpsBadge.classList.remove('active');
+                    badgeText.innerText = "ERROR";
+                    infoText.innerText = "Lỗi thiết bị định vị: " + error.message;
+                    weatherInfo.innerText = "Không có tọa độ";
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000
+                }
+            );
+        } else {
+            infoText.innerText = "Trình duyệt không hỗ trợ Geolocation.";
+            weatherInfo.innerText = "Không hỗ trợ";
+        }
+    </script>
+</body>
+</html>
