@@ -3,6 +3,7 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useAuth } from "../../context/AuthContext";
+import Station3DMap from "../../components/EVBattery/Station3DMap";
 
 type StationStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE";
 
@@ -17,6 +18,8 @@ type Station = {
   phuongxaId?: number;
   phuongxaName?: string;
   status: StationStatus;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -177,11 +180,53 @@ export default function StationManagement() {
     quan: 0,
     province: 0,
     phuongxa: 0,
-    status: "ACTIVE" as StationStatus
+    status: "ACTIVE" as StationStatus,
+    latitude: 0.0,
+    longitude: 0.0
   });
 
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [focusStationId, setFocusStationId] = useState<number | null>(null);
+  const [mapStations, setMapStations] = useState<Station[]>([]);
+
+  const fetchAllStationsForMap = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/admin/stations?page=0&size=1000`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMapStations(data.content || []);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải toàn bộ trạm cho bản đồ:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === "map" && token) {
+      fetchAllStationsForMap();
+    }
+  }, [viewMode, token]);
+
+  const getFilterAreaName = () => {
+    const provinceObj = provinces.find((p) => p.id === currentSearchProvince);
+    const districtObj = searchDistricts.find((d) => d.id === currentSearchDistrict);
+    const wardObj = searchWards.find((w) => w.id === currentSearchWard);
+
+    const parts = [];
+    if (wardObj) parts.push(wardObj.tenphuongxa);
+    if (districtObj) parts.push(districtObj.tenquanhuyen);
+    if (provinceObj) parts.push(provinceObj.tinhthanhcol);
+
+    return parts.join(", ");
+  };
+
   // Column Visibility States
-  type ColumnKey = "id" | "name" | "address" | "location" | "status" | "actions";
+  type ColumnKey = "id" | "name" | "address" | "location" | "status" | "latitude" | "longitude" | "actions";
 
   const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
     id: true,
@@ -189,6 +234,8 @@ export default function StationManagement() {
     address: true,
     location: true,
     status: true,
+    latitude: false,
+    longitude: false,
     actions: true,
   });
 
@@ -213,6 +260,8 @@ export default function StationManagement() {
     { key: "address", label: "Địa Điểm" },
     { key: "location", label: "Khu Vực" },
     { key: "status", label: "Tình Trạng" },
+    { key: "latitude", label: "Vĩ Độ" },
+    { key: "longitude", label: "Kinh Độ" },
     { key: "actions", label: "Hành Động" },
   ];
 
@@ -413,7 +462,9 @@ export default function StationManagement() {
             quan: detailData.quanId || 0,
             province: detailData.provinceId || 0,
             phuongxa: detailData.phuongxaId || 0,
-            status: detailData.status
+            status: detailData.status,
+            latitude: detailData.latitude || 0,
+            longitude: detailData.longitude || 0
           });
         } else {
           throw new Error("Cannot fetch station detail");
@@ -426,7 +477,9 @@ export default function StationManagement() {
           quan: station.quanId || 0,
           province: station.provinceId || 0,
           phuongxa: station.phuongxaId || 0,
-          status: station.status
+          status: station.status,
+          latitude: station.latitude || 0,
+          longitude: station.longitude || 0
         });
       }
     } else {
@@ -437,7 +490,9 @@ export default function StationManagement() {
         quan: 0,
         province: 0,
         phuongxa: 0,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        latitude: 0,
+        longitude: 0
       });
     }
     setIsModalOpen(true);
@@ -472,6 +527,9 @@ export default function StationManagement() {
       
       handleCloseModal();
       fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
+      if (viewMode === "map") {
+        fetchAllStationsForMap();
+      }
     } catch (err: any) {
       alert(err.message);
     }
@@ -493,6 +551,9 @@ export default function StationManagement() {
         }
         
         fetchStations(currentPage, currentKeyword, currentSearchId, currentSearchProvince, currentSearchDistrict, currentSearchWard, currentSearchStatus);
+        if (viewMode === "map") {
+          fetchAllStationsForMap();
+        }
       } catch (err: any) {
         alert(err.message);
       }
@@ -718,6 +779,8 @@ export default function StationManagement() {
                                 address: checked,
                                 location: checked,
                                 status: checked,
+                                latitude: checked,
+                                longitude: checked,
                                 actions: checked,
                               });
                             }}
@@ -763,139 +826,217 @@ export default function StationManagement() {
           </div>
         )}
 
-        <ComponentCard title="Danh sách các trạm">
-          <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800/50">
-                  {visibleColumns.id && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      ID
-                    </th>
-                  )}
-                  {visibleColumns.name && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      Tên Trạm
-                    </th>
-                  )}
-                  {visibleColumns.address && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      Địa Điểm
-                    </th>
-                  )}
-                  {visibleColumns.location && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      Khu Vực
-                    </th>
-                  )}
-                  {visibleColumns.status && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      Tình Trạng
-                    </th>
-                  )}
-                  {visibleColumns.actions && (
-                    <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
-                      Hành Động
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {stations.map((station) => (
-                  <tr key={station.id}>
+        {/* View Mode Switcher Panel */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm gap-4 mb-6">
+          <div>
+            <h3 className="text-base font-bold text-gray-800 dark:text-white">
+              Chế độ hiển thị trạm
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Xem dưới dạng bảng danh sách truyền thống hoặc bản đồ giám sát 3D trực quan
+            </p>
+          </div>
+          <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex-1 sm:flex-initial text-center px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+              }`}
+            >
+              Dạng danh sách
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("map")}
+              className={`flex-1 sm:flex-initial text-center px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                viewMode === "map"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+              }`}
+            >
+              Bản đồ 3D
+            </button>
+          </div>
+        </div>
+
+        {viewMode === "list" ? (
+          <ComponentCard title="Danh sách các trạm">
+            <div className="overflow-x-auto">
+              <table className="w-full whitespace-nowrap">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-800/50">
                     {visibleColumns.id && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">#{station.id}</td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        ID
+                      </th>
                     )}
                     {visibleColumns.name && (
-                      <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{station.name}</td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Tên Trạm
+                      </th>
                     )}
                     {visibleColumns.address && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words min-w-[250px]" title={station.address}>
-                        {station.address}
-                      </td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Địa Điểm
+                      </th>
                     )}
                     {visibleColumns.location && (
-                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {station.phuongxaName ? `${station.phuongxaName}, ` : ""}{station.quanName ? `${station.quanName}, ` : ""}{station.provinceName || ""}
-                      </td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Khu Vực
+                      </th>
                     )}
                     {visibleColumns.status && (
-                      <td className="px-5 py-4 text-sm">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeColor(station.status)}`}>
-                          {getStatusText(station.status)}
-                        </span>
-                      </td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Tình Trạng
+                      </th>
+                    )}
+                    {visibleColumns.latitude && (
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Vĩ Độ
+                      </th>
+                    )}
+                    {visibleColumns.longitude && (
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Kinh Độ
+                      </th>
                     )}
                     {visibleColumns.actions && (
-                      <td className="px-5 py-4 text-sm">
-                        <button 
-                          onClick={() => handleOpenModal(station)}
-                          className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 font-medium mr-3"
-                        >
-                          Chỉnh sửa
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(station.id)}
-                          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
-                        >
-                          Xóa
-                        </button>
-                      </td>
+                      <th className="px-5 py-4 text-left text-sm font-semibold text-gray-800 dark:text-white">
+                        Hành Động
+                      </th>
                     )}
                   </tr>
-                ))}
-                
-                {stations.length === 0 && !isLoading && (
-                  <tr>
-                    <td colSpan={activeColumnsCount} className="px-5 py-8 text-center text-gray-500">
-                      Chưa có dữ liệu trạm.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Pagination */}
-          {(totalPages > 1 || stations.length > 0) && (
-            <div className="flex justify-between items-center mt-6 px-5 border-t border-gray-100 dark:border-gray-800 pt-4">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Trang {currentPage + 1} / {totalPages}
-                </span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(0);
-                  }}
-                  className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="10">10 / trang</option>
-                  <option value="20">20 / trang</option>
-                  <option value="50">50 / trang</option>
-                  <option value="100">100 / trang</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                  className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
-                >
-                  Trước
-                </button>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
-                >
-                  Sau
-                </button>
-              </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {stations.map((station) => (
+                    <tr key={station.id}>
+                      {visibleColumns.id && (
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">#{station.id}</td>
+                      )}
+                      {visibleColumns.name && (
+                        <td className="px-5 py-4 text-sm text-gray-800 dark:text-white font-medium">{station.name}</td>
+                      )}
+                      {visibleColumns.address && (
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words min-w-[250px]" title={station.address}>
+                          {station.address}
+                        </td>
+                      )}
+                      {visibleColumns.location && (
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {station.phuongxaName ? `${station.phuongxaName}, ` : ""}{station.quanName ? `${station.quanName}, ` : ""}{station.provinceName || ""}
+                        </td>
+                      )}
+                      {visibleColumns.status && (
+                        <td className="px-5 py-4 text-sm">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeColor(station.status)}`}>
+                            {getStatusText(station.status)}
+                          </span>
+                        </td>
+                      )}
+                      {visibleColumns.latitude && (
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {station.latitude?.toFixed(6) || "Chưa có"}
+                        </td>
+                      )}
+                      {visibleColumns.longitude && (
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {station.longitude?.toFixed(6) || "Chưa có"}
+                        </td>
+                      )}
+                      {visibleColumns.actions && (
+                        <td className="px-5 py-4 text-sm">
+                          <button 
+                            onClick={() => handleOpenModal(station)}
+                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 font-medium mr-3 cursor-pointer"
+                          >
+                            Chỉnh sửa
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(station.id)}
+                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium mr-3 cursor-pointer"
+                          >
+                            Xóa
+                          </button>
+                          <button
+                            onClick={() => {
+                              setFocusStationId(station.id);
+                              setViewMode("map");
+                            }}
+                            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center align-middle cursor-pointer"
+                            title="Xem trên bản đồ 3D"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  
+                  {stations.length === 0 && !isLoading && (
+                    <tr>
+                      <td colSpan={activeColumnsCount} className="px-5 py-8 text-center text-gray-500">
+                        Chưa có dữ liệu trạm.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
-        </ComponentCard>
+            
+            {/* Pagination */}
+            {(totalPages > 1 || stations.length > 0) && (
+              <div className="flex justify-between items-center mt-6 px-5 border-t border-gray-100 dark:border-gray-800 pt-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Trang {currentPage + 1} / {totalPages}
+                  </span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(0);
+                    }}
+                    className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  >
+                    <option value="10">10 / trang</option>
+                    <option value="20">20 / trang</option>
+                    <option value="50">50 / trang</option>
+                    <option value="100">100 / trang</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                    className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    className="px-3 py-1 rounded border border-gray-200 text-sm font-medium disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </ComponentCard>
+        ) : (
+          <Station3DMap
+            stations={mapStations}
+            focusStationId={focusStationId}
+            onClearFocus={() => setFocusStationId(null)}
+            filterArea={getFilterAreaName()}
+          />
+        )}
       </div>
 
       {/* Modal */}
@@ -996,6 +1137,35 @@ export default function StationManagement() {
                     }))}
                     placeholder="Chọn Phường/Xã"
                     className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Vĩ độ (Latitude)
+                  </label>
+                  <input 
+                    type="number" 
+                    step="any"
+                    value={formData.latitude || ""}
+                    onChange={(e) => setFormData({...formData, latitude: parseFloat(e.target.value) || 0})}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    placeholder="VD: 10.334680"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Kinh độ (Longitude)
+                  </label>
+                  <input 
+                    type="number" 
+                    step="any"
+                    value={formData.longitude || ""}
+                    onChange={(e) => setFormData({...formData, longitude: parseFloat(e.target.value) || 0})}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    placeholder="VD: 107.088435"
                   />
                 </div>
               </div>
