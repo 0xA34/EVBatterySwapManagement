@@ -44,6 +44,12 @@ public class Station {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Phuongxa phuongxa;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @NotNull
     @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
     private String status;

@@ -117,6 +117,8 @@ public class StationService implements IStationService {
         station.setName(request.name());
         station.setAddress(request.address());
         station.setStatus(request.status());
+        station.setLatitude(request.latitude());
+        station.setLongitude(request.longitude());
 
         if (request.quan() != null) {
             Quanhuyen q = new Quanhuyen();
@@ -150,6 +152,8 @@ public class StationService implements IStationService {
         station.setName(request.name());
         station.setAddress(request.address());
         station.setStatus(request.status());
+        station.setLatitude(request.latitude());
+        station.setLongitude(request.longitude());
 
         if (request.quan() != null) {
             Quanhuyen q = new Quanhuyen();
