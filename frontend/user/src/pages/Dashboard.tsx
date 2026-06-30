@@ -16,6 +16,33 @@ export default function Dashboard() {
   const [selectedWard, setSelectedWard] = useState('');
   const [keyword, setKeyword] = useState('');
   const [isNearest, setIsNearest] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        (error) => {
+          console.warn("User denied or failed to fetch geolocation", error);
+        }
+      );
+    }
+  }, []);
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return R * c;
+  };
 
   const [searchFilter, setSearchFilter] = useState({ province: '', district: '', ward: '', keyword: '' });
 
@@ -255,6 +282,14 @@ export default function Dashboard() {
             </div>
 
             <div style={{ padding: '15px 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', margin: '15px 0' }}>
+              {userLocation && st.latitude && st.longitude && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ color: '#64748b' }}>Khoảng cách:</span>
+                  <span style={{ fontWeight: 600, color: '#3b82f6' }}>
+                    {calculateDistance(userLocation.lat, userLocation.lng, st.latitude, st.longitude)?.toFixed(1)} km
+                  </span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
                 <span style={{ color: '#64748b' }}>Ngày tạo:</span>
                 <span style={{ fontWeight: 600 }}>{new Date(st.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -287,12 +322,32 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <Link className="station-button" to={`/station?id=${st.id}`}>
-              <span>Xem danh sách pin</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </Link>
+            <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+              <button 
+                onClick={(e) => { e.preventDefault(); window.open(`/map.html?lat=${st.latitude}&lng=${st.longitude}&name=${encodeURIComponent(st.name)}`, '_blank'); }} 
+                className="station-button"
+                style={{ 
+                  marginTop: 0,
+                  padding: '0.85rem',
+                  flex: '0 0 auto',
+                  background: '#f8fafc', 
+                  color: '#3b82f6', 
+                  border: '1px solid #cbd5e1', 
+                }}
+                title="Xem trên bản đồ"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: 0 }}>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+              </button>
+              <Link className="station-button" to={`/station?id=${st.id}`} style={{ flex: 1, marginTop: 0 }}>
+                <span>Xem danh sách pin</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </Link>
+            </div>
           </div>
         )})}
       </div>
