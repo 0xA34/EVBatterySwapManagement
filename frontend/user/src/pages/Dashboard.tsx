@@ -63,7 +63,12 @@ export default function Dashboard() {
       if (searchFilter.district) url += `&quan=${searchFilter.district}`;
       if (searchFilter.ward) url += `&phuongxa=${searchFilter.ward}`;
       if (searchFilter.keyword) url += `&keyword=${encodeURIComponent(searchFilter.keyword)}`;
-      const response = await fetch(url);
+      
+      const token = localStorage.getItem('user_token');
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(url, { headers });
       const data = await response.json();
       setStations(data.content || []);
       setTotalPages(data.page?.totalPages || 1);
@@ -79,7 +84,11 @@ export default function Dashboard() {
 
   const fetchProvinces = async () => {
     try {
-      const response = await fetch(PROVINCE_API);
+      const token = localStorage.getItem('user_token');
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const response = await fetch(PROVINCE_API, { headers });
       const data = await response.json();
       setProvinces(data || []);
     } catch (err) {
@@ -89,7 +98,11 @@ export default function Dashboard() {
 
   const fetchDistricts = async (provinceId: string) => {
     try {
-      const response = await fetch(`${DISTRICT_API}?idTinhThanh=${provinceId}`);
+      const token = localStorage.getItem('user_token');
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${DISTRICT_API}?idTinhThanh=${provinceId}`, { headers });
       const data = await response.json();
       setDistricts(data || []);
     } catch (err) {
@@ -99,7 +112,11 @@ export default function Dashboard() {
 
   const fetchWards = async (districtId: string) => {
     try {
-      const response = await fetch(`${WARD_API}?idQuanHuyen=${districtId}`);
+      const token = localStorage.getItem('user_token');
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${WARD_API}?idQuanHuyen=${districtId}`, { headers });
       const data = await response.json();
       setWards(data || []);
     } catch (err) {

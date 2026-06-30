@@ -59,10 +59,6 @@ export default function SwapHistory() {
       default: return '';
     }
   };
-      default: return '';
-    }
-  };
-
   const getStatusLabel = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'COMPLETED': return 'Hoàn thành';
@@ -151,14 +147,6 @@ export default function SwapHistory() {
           </button>
         </div>
       )}
-
-      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        <Link to="/dashboard" className="button primary">Về Dashboard</Link>
-      </div>
-
-    </main>
-  );
-}
 
       <div style={{ textAlign: 'center', marginTop: '2rem' }}>
         <Link to="/dashboard" className="button primary">Về Dashboard</Link>

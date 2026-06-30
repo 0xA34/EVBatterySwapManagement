@@ -81,6 +81,9 @@ public class SecurityConfig {
                         // Public: WebSocket endpoint (auth handled in handshake)
                         .requestMatchers("/ws/**").permitAll()
 
+                        // Public: Station and Location endpoints
+                        .requestMatchers("/api/station/**", "/api/donvihanhchinh/**").permitAll()
+
                         // Public: Swagger UI and OpenAPI docs (anyone can view the docs)
                         // Authorization is enforced at the individual API endpoint level
                         .requestMatchers(

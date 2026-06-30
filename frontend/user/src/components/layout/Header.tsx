@@ -1,4 +1,4 @@
-import { getApiUrl } from '../../utils/api';
+import { getApiUrl, API_BASE_URL } from '../../utils/api';
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -253,10 +253,21 @@ export default function Header() {
         sessionId += chars.charAt(Math.floor(Math.random() * chars.length));
       }
 
-      const isHttps = window.location.protocol === 'https:';
-      const wsProtocol = isHttps ? 'wss' : 'ws';
-      const backendHost = window.location.hostname === 'localhost' ? 'localhost:8080' : window.location.host;
-      const wsUrl = `${wsProtocol}://${backendHost}/ws/${serverId}/${sessionId}/websocket?token=${token}`;
+      // Use API_BASE_URL to determine the correct backend host and protocol for WebSocket
+      let wsUrl = '';
+      if (API_BASE_URL.startsWith('http://')) {
+        const host = API_BASE_URL.replace('http://', '');
+        wsUrl = `ws://${host}/ws/${serverId}/${sessionId}/websocket?token=${token}`;
+      } else if (API_BASE_URL.startsWith('https://')) {
+        const host = API_BASE_URL.replace('https://', '');
+        wsUrl = `wss://${host}/ws/${serverId}/${sessionId}/websocket?token=${token}`;
+      } else {
+        // Fallback for relative paths
+        const isHttps = window.location.protocol === 'https:';
+        const wsProtocol = isHttps ? 'wss' : 'ws';
+        const backendHost = window.location.hostname === 'localhost' ? 'localhost:8080' : window.location.host;
+        wsUrl = `${wsProtocol}://${backendHost}/ws/${serverId}/${sessionId}/websocket?token=${token}`;
+      }
 
       console.log('Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
