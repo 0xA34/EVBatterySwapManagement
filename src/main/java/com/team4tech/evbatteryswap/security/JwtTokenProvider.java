@@ -30,12 +30,13 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(key256);
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, Integer sessionVersion) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(username)
+                .claim("sessionVersion", sessionVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey())
@@ -49,6 +50,15 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    public Integer getSessionVersionFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("sessionVersion", Integer.class);
     }
 
     public Date getExpirationFromToken(String token) {

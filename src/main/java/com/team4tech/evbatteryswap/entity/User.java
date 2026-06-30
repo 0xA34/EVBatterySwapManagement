@@ -82,4 +82,7 @@ public class User {
     @Column(name = "lockout_until")
     private Instant lockoutUntil;
 
+    @ColumnDefault("1")
+    @Column(name = "session_version")
+    private Integer sessionVersion = 1;
 }

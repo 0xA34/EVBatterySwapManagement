@@ -94,9 +94,11 @@ public class AuthController {
 
         if (user != null) {
             userRepository.resetFailedLoginAttempts(user.getUsername());
+            user.setSessionVersion(user.getSessionVersion() == null ? 1 : user.getSessionVersion() + 1);
+            userRepository.save(user);
         }
 
-        String token = jwtTokenProvider.generateToken(authentication.getName());
+        String token = jwtTokenProvider.generateToken(authentication.getName(), user != null ? user.getSessionVersion() : 1);
 
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -149,7 +151,7 @@ public class AuthController {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    String token = jwtTokenProvider.generateToken(user.getUsername());
+                    String token = jwtTokenProvider.generateToken(user.getUsername(), user.getSessionVersion());
                     return ResponseEntity.ok(new LoginResponse(token, user.getRole()));
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));

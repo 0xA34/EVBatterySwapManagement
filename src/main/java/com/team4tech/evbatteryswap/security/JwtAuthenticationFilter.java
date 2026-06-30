@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final com.team4tech.evbatteryswap.repository.UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,6 +41,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     && !tokenBlacklistService.isBlacklisted(jwt)
                     && jwtTokenProvider.validateToken(jwt)) {
                 String username = jwtTokenProvider.getUsernameFromToken(jwt);
+                
+                com.team4tech.evbatteryswap.entity.User user = userRepository.findByUsername(username).orElse(null);
+                if (user == null) {
+                    throw new RuntimeException("User not found");
+                }
+                
+                Integer tokenSessionVersion = jwtTokenProvider.getSessionVersionFromToken(jwt);
+                Integer currentSessionVersion = user.getSessionVersion();
+                if (tokenSessionVersion != null && currentSessionVersion != null && !tokenSessionVersion.equals(currentSessionVersion)) {
+                    throw new RuntimeException("Phiên đăng nhập đã hết hạn vì tài khoản được đăng nhập ở nơi khác");
+                }
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken authentication =
