@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.entity.BatterySwapOrder;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 
 @Builder
 public record SwapOrderResponse(
@@ -22,7 +23,11 @@ public record SwapOrderResponse(
         String rejectReason,
         Instant createdAt,
         Instant expiresAt,
-        Instant scheduledAt
+        Instant scheduledAt,
+        String voucherCode,
+        BigDecimal basePrice,
+        BigDecimal discountAmount,
+        BigDecimal finalPrice
 ) {
     public static SwapOrderResponse from(BatterySwapOrder order) {
         return SwapOrderResponse.builder()
@@ -42,6 +47,10 @@ public record SwapOrderResponse(
                 .createdAt(order.getCreatedAt())
                 .expiresAt(order.getExpiresAt())
                 .scheduledAt(order.getScheduledAt())
+                .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
+                .basePrice(order.getBasePrice())
+                .discountAmount(order.getDiscountAmount())
+                .finalPrice(order.getFinalPrice())
                 .build();
     }
 }
