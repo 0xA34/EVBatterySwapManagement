@@ -15,6 +15,8 @@ public record StationResponse(
         Integer phuongxaId,
         String phuongxaName,
         String status,
+        Double latitude,
+        Double longitude,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -30,6 +32,8 @@ public record StationResponse(
                 s.getPhuongxa() != null ? s.getPhuongxa().getId()        : null,
                 s.getPhuongxa() != null ? s.getPhuongxa().getTenphuongxa() : null,
                 s.getStatus(),
+                s.getLatitude(),
+                s.getLongitude(),
                 s.getCreatedAt(),
                 s.getUpdatedAt()
         );

@@ -19,7 +19,14 @@ interface Battery {
   healthPercentage: number;
   chargeCycles: number;
   status: string;
+  amount: number;
+  currentStationId: number;
   currentStationName: string;
+  userId: number | null;
+  userUsername: string | null;
+  manufactureDate: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -216,8 +223,8 @@ const BatteryInventory: React.FC = () => {
         setSearchQuery={setSearchQuery}
         setActiveSearchQuery={setActiveSearchQuery}
         onAddClick={() => showToast('Chức năng thêm pin đang được phát triển', 'info')}
-        onEditClick={(_id: number) => showToast(`Chức năng sửa pin đang được phát triển`, 'info')}
-        onDeleteClick={(_battery: any) => showToast(`Chức năng xóa pin đang được phát triển`, 'info')}
+        onEditClick={() => showToast(`Chức năng sửa pin đang được phát triển`, 'info')}
+        onDeleteClick={() => showToast(`Chức năng xóa pin đang được phát triển`, 'info')}
         statusConfig={STATUS_CONFIG}
         sohColor={(soh: number) => soh >= 90 ? 'text-green-500' : soh >= 75 ? 'text-yellow-500' : 'text-red-500'}
       />

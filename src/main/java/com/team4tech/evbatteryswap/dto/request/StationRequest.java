@@ -23,5 +23,9 @@ public record StationRequest(
         Integer phuongxa,
 
         @NotNull(message = "Trạng thái không được để trống")
-        String status
+        String status,
+
+        Double latitude,
+
+        Double longitude
 ) {}

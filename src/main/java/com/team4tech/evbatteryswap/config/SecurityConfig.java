@@ -4,6 +4,7 @@ import com.team4tech.evbatteryswap.security.JwtAuthenticationFilter;
 import com.team4tech.evbatteryswap.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +29,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Value("${app.cors.allowed-origins}")
+    private java.util.List<String> allowedOrigins;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -49,7 +53,7 @@ public class SecurityConfig {
     public org.springframework.web.filter.CorsFilter corsFilter() {
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-        config.setAllowedOriginPatterns(java.util.Collections.singletonList("*"));
+        config.setAllowedOriginPatterns(allowedOrigins);
         config.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(java.util.Collections.singletonList("*"));
         config.setAllowCredentials(true);
@@ -89,7 +93,7 @@ public class SecurityConfig {
                         .permitAll()
 
                         // Everything else requires authentication
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
 
                 // Register the authentication provider
                 .authenticationProvider(authenticationProvider())

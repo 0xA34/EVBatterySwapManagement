@@ -4,6 +4,7 @@ import { useToast } from "../../context/ToastContext";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import { Link } from "react-router";
+import { useToast } from "../../context/ToastContext";
 
 interface HeaderProps {
   onClick?: () => void;
