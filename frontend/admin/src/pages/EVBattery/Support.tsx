@@ -624,12 +624,26 @@ export default function Support() {
                       </td>
                     )}
                     {visibleColumns.actions && (
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-5 py-4 text-sm space-x-2">
                         <button
                           onClick={() => handleOpenModal(ticket)}
-                          className="text-brand-500 hover:text-brand-600 font-semibold cursor-pointer text-sm"
+                          className="p-2 hover:bg-gray-100 rounded-lg dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors inline-flex items-center"
+                          title="Cập nhật"
                         >
-                          Cập nhật
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.83 20.82a4.5 4.5 0 0 1-2.052 1.23l-3.293.715.714-3.293a4.5 4.5 0 0 1 1.23-2.052l12.56-12.56Z"
+                            />
+                          </svg>
                         </button>
                       </td>
                     )}

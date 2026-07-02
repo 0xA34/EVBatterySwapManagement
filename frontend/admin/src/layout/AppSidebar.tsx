@@ -32,6 +32,18 @@ const navItems: NavItem[] = [
 
 
 
+const BatteryIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.75c.414 0 .75.336.75.75v1.5c0 .414-.336.75-.75.75H21M3 8.25h15c.414 0 .75.336.75.75v6c0 .414-.336.75-.75.75H3a.75.75 0 0 1-.75-.75V9c0-.414.336-.75.75-.75z" />
+  </svg>
+);
+
+const VoucherIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-12h12c.414 0 .75.336.75.75v3.18a3 3 0 0 0 0 5.64v3.18c0 .414-.336.75-.75.75H7.5a.75.75 0 0 1-.75-.75v-3.18a3 3 0 0 0 0-5.64V6.75A.75.75 0 0 1 7.5 6z" />
+  </svg>
+);
+
 const evBatteryItems: NavItem[] = [
   {
     icon: <BoxCubeIcon />,
@@ -44,7 +56,7 @@ const evBatteryItems: NavItem[] = [
     path: "/users",
   },
   {
-    icon: <PlugInIcon />,
+    icon: <BatteryIcon />,
     name: "Quản Lý Pin",
     path: "/batteries",
   },
@@ -52,6 +64,11 @@ const evBatteryItems: NavItem[] = [
     icon: <PlugInIcon />,
     name: "Gói Thuê Pin",
     path: "/subscriptions",
+  },
+  {
+    icon: <VoucherIcon />,
+    name: "Quản Lý Voucher",
+    path: "/vouchers",
   },
   {
     icon: <PieChartIcon />,
