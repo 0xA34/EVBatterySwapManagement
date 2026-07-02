@@ -298,7 +298,7 @@ const AppSidebar: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <img
                 className="w-10 h-10 object-contain rounded-xl"
-                src="/images/favicon.ico"
+                src="/logo.png"
                 alt="Logo"
               />
               <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -308,7 +308,7 @@ const AppSidebar: React.FC = () => {
           ) : (
             <img
               className="w-10 h-10 object-contain rounded-xl"
-              src="/images/favicon.ico"
+              src="/logo.png"
               alt="Logo"
             />
           )}
