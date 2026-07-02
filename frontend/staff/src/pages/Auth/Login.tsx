@@ -137,14 +137,7 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300">
-              Đăng ký
-            </Link>
-          </p>
-        </div>
+
       </div>
     </div>
   );

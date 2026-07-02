@@ -10,7 +10,7 @@ import SwapHistory from "./pages/SwapHistory";
 import Revenue from "./pages/Revenue";
 import Profile from "./pages/Profile";
 import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
+
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -24,7 +24,7 @@ export default function App() {
           <Routes>
             {/* Public Route */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+
 
             {/* Protected Dashboard Layout */}
             <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
