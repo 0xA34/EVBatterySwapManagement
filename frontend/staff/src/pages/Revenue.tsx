@@ -343,4 +343,3 @@ export default function Revenue() {
     </div>
   );
 }
-}

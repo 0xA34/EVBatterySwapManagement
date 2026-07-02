@@ -81,6 +81,10 @@ export default function Station() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
+  const [voucherInput, setVoucherInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+  const [voucherMessage, setVoucherMessage] = useState('');
+
   useEffect(() => {
     if (feedbackModal) {
       const timer = setTimeout(() => setFeedbackModal(null), 3000);
@@ -98,6 +102,86 @@ export default function Station() {
     setSelectedBattery(null);
     setScheduleTime('');
     setIsScheduling(false);
+    setVoucherInput('');
+    setAppliedVoucher(null);
+    setVoucherMessage('');
+  };
+
+  const handleApplyVoucher = async () => {
+    if (!voucherInput.trim()) {
+      setVoucherMessage('Vui lòng nhập mã giảm giá.');
+      setAppliedVoucher(null);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('user_token');
+      const response = await fetch(getApiUrl(`/api/vouchers/check?code=${voucherInput.trim()}`), {
+        headers: { 
+          'accept': '*/*',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setAppliedVoucher(null);
+          setVoucherMessage('Bạn cần đăng nhập để sử dụng mã giảm giá.');
+          return;
+        }
+        let errorMsg = 'Mã giảm giá không hợp lệ.';
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) errorMsg = errData.error;
+        } catch(e) {
+          // Ignore JSON parse error, keep fallback message
+        }
+        setAppliedVoucher(null);
+        setVoucherMessage(errorMsg);
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.status === 'EXPIRED') {
+        setAppliedVoucher(null);
+        setVoucherMessage('Mã giảm giá đã hết hạn.');
+        return;
+      }
+      if (data.status === 'INACTIVE') {
+        setAppliedVoucher(null);
+        setVoucherMessage('Mã không hợp lệ, chưa kích hoạt hoặc đã hết lượt dùng.');
+        return;
+      }
+      
+      const basePrice = selectedBattery?.amount ?? 50000;
+      if (data.minOrderValue && basePrice < data.minOrderValue) {
+        setAppliedVoucher(null);
+        setVoucherMessage(`Mã giảm giá áp dụng cho đơn từ ${data.minOrderValue.toLocaleString('vi-VN')} VNĐ.`);
+        return;
+      }
+
+      setAppliedVoucher(data);
+      setVoucherMessage('Áp dụng mã giảm giá thành công!');
+    } catch (error) {
+      console.error('Failed to check voucher', error);
+      setAppliedVoucher(null);
+      setVoucherMessage('Lỗi kết nối khi kiểm tra mã giảm giá.');
+    }
+  };
+
+  const calculateDiscount = (basePrice: number) => {
+    if (!appliedVoucher) return 0;
+    let discount = 0;
+    if (appliedVoucher.discountType === 'PERCENTAGE') {
+      discount = (basePrice * appliedVoucher.discountValue) / 100;
+    } else if (appliedVoucher.discountType === 'FIXED_AMOUNT') {
+      discount = appliedVoucher.discountValue;
+    }
+    return Math.min(discount, basePrice);
+  };
+
+  const calculateFinalPrice = (basePrice: number) => {
+    return Math.max(0, basePrice - calculateDiscount(basePrice));
   };
 
   const handleConfirmSwap = async (isBooking: boolean = false) => {
@@ -122,6 +206,9 @@ export default function Station() {
       };
       if (isBooking) {
         payload.scheduledAt = scheduledAtIso;
+      }
+      if (appliedVoucher && appliedVoucher.code) {
+        payload.voucherCode = appliedVoucher.code;
       }
 
       const response = await fetch(getApiUrl(`${endpoint}`), {
@@ -331,6 +418,53 @@ export default function Station() {
                 </div>
               </div>
             </div>
+
+            {/* Voucher Section */}
+            <div style={{ marginTop: '20px', textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>Mã giảm giá</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  value={voucherInput}
+                  onChange={(e) => setVoucherInput(e.target.value)}
+                  placeholder="Nhập mã giảm giá"
+                  style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '2px solid #e5e7eb', fontSize: '14px' }} 
+                />
+                <button 
+                  onClick={handleApplyVoucher}
+                  style={{ padding: '0 16px', borderRadius: '8px', border: 'none', background: '#2563eb', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                >
+                  Áp dụng
+                </button>
+              </div>
+              {voucherMessage && (
+                <p style={{ marginTop: '8px', fontSize: '13px', color: appliedVoucher ? '#16a34a' : '#dc2626', fontWeight: 500 }}>
+                  {voucherMessage}
+                </p>
+              )}
+            </div>
+
+            {/* Total Price Section if voucher applied */}
+            {appliedVoucher && (
+              <div style={{ marginTop: '15px', padding: '12px', background: '#f3f4f6', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#4b5563', fontSize: '14px' }}>Tạm tính:</span>
+                  <span style={{ color: '#4b5563', fontSize: '14px' }}>{(selectedBattery.amount ?? 50000).toLocaleString('vi-VN')} VNĐ</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#4b5563', fontSize: '14px' }}>Giảm giá:</span>
+                  <span style={{ color: '#16a34a', fontSize: '14px' }}>
+                    - {calculateDiscount(selectedBattery.amount ?? 50000).toLocaleString('vi-VN')} VNĐ
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #d1d5db', paddingTop: '8px' }}>
+                  <span style={{ color: '#1f2937', fontSize: '15px' }}>Tổng cộng:</span>
+                  <span style={{ color: '#2563eb', fontSize: '16px' }}>
+                    {calculateFinalPrice(selectedBattery.amount ?? 50000).toLocaleString('vi-VN')} VNĐ
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div style={{ marginTop: '20px', textAlign: 'left' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151', fontSize: '14px' }}>Hình thức đổi pin</label>
