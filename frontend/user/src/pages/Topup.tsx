@@ -8,7 +8,7 @@ export default function Topup() {
   const [showResult, setShowResult] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
-  const [userInfo, setUserInfo] = useState<{ walletBalance?: number | null } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ walletBalance?: number | null; username?: string } | null>(null);
 
   React.useEffect(() => {
     const fetchUserInfo = async () => {
@@ -59,8 +59,10 @@ export default function Topup() {
       return;
     }
     
-    // Giả lập lấy QR code từ API
-    setQrCodeUrl("https://api.vietqr.io/image/970415-22749061-fS5qQoE.jpg?amount=" + amount + "&addInfo=Nap%20Tien%20VinFast");
+    const username = userInfo?.username || "KhachHang";
+    
+    // Tạo QR code từ API VietQR
+    setQrCodeUrl(`https://img.vietqr.io/image/ACB-22749061-compact1.jpg?addInfo=${username}&amount=${amount}`);
     setShowResult(true);
   };
 
@@ -166,8 +168,8 @@ export default function Topup() {
               <div className="detail-row">
                 <span className="detail-label">Nội dung</span>
                 <div className="detail-value-copy">
-                  <span className="font-mono">Nap Tien VinFast</span>
-                  <button onClick={() => copyText('Nap Tien VinFast')} className="btn-copy" title="Copy Nội dung"><Copy size={14} /></button>
+                  <span className="font-mono">{userInfo?.username || "KhachHang"}</span>
+                  <button onClick={() => copyText(userInfo?.username || "KhachHang")} className="btn-copy" title="Copy Nội dung"><Copy size={14} /></button>
                 </div>
               </div>
             </div>
