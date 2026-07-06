@@ -19,13 +19,13 @@ import java.math.BigDecimal;
 public record LinkBatteryRequest(
 
         @NotBlank(message = "Số serial không được để trống")
-        @Pattern(regexp = "^PIN-[A-Za-z0-9]{6}$",
-                 message = "Số serial phải có định dạng PIN-XXXXXX (6 ký tự chữ hoặc số)")
+        @Pattern(regexp = "^PIN-[A-Z0-9]{6}$",
+                 message = "Số serial phải có định dạng PIN-XXXXXX (6 ký tự chữ HOA hoặc số)")
         String serialNumber,
 
         @NotBlank(message = "Model không được để trống")
-        @Pattern(regexp = "^(Feliz|Evo|Vero|Drift)-[A-Za-z0-9]{6}$",
-                 message = "Model phải bắt đầu bằng Feliz, Evo, Vero hoặc Drift, theo sau bởi '-' và 6 ký tự (VD: Feliz-6TYUI1)")
+        @Pattern(regexp = "^(Feliz|Evo|Vero|Drift)-[A-Z0-9]{6}$",
+                 message = "Model phải bắt đầu bằng Feliz, Evo, Vero hoặc Drift, theo sau bởi '-' và 6 ký tự chữ HOA hoặc số (VD: Feliz-6TYUI1)")
         String model,
 
         @DecimalMin(value = "0.0", inclusive = false, message = "Dung lượng phải lớn hơn 0")
