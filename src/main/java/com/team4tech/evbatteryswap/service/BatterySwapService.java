@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.service;
 
+import com.team4tech.evbatteryswap.dto.request.LinkBatteryRequest;
 import com.team4tech.evbatteryswap.dto.request.RentRequest;
 import com.team4tech.evbatteryswap.dto.request.SwapRequest;
 import com.team4tech.evbatteryswap.dto.response.BatteryDiagnosticsResponse;
@@ -229,6 +230,47 @@ public class BatterySwapService {
         diagnosticsService.recalculate(newBattery.getId(), "ON_RENT");
 
         return BatteryResponse.from(newBattery);
+    }
+
+    @Transactional
+    public BatteryResponse linkBattery(String username, LinkBatteryRequest request) {
+
+        User driver = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Không tìm thấy tài xế: " + username));
+
+        Optional<Battery> existingBattery = batteryRepository.findCurrentBatteryOfUser(driver.getId());
+        if (existingBattery.isPresent()) {
+            throw new IllegalStateException(
+                    "Tài xế đã liên kết pin (serial: "
+                    + existingBattery.get().getSerialNumber()
+                    + "). Mỗi tài xế chỉ được liên kết 1 pin.");
+        }
+
+        if (batteryRepository.existsBySerialNumber(request.serialNumber())) {
+            throw new IllegalStateException(
+                    "Số serial '" + request.serialNumber() + "' đã tồn tại trong hệ thống.");
+        }
+
+        Battery battery = new Battery();
+        battery.setSerialNumber(request.serialNumber());
+        battery.setModel(request.model());
+        battery.setCapacityKwh(request.effectiveCapacityKwh());
+        battery.setCurrentChargePercentage(request.effectiveChargePercentage());
+        battery.setHealthPercentage(new java.math.BigDecimal("100.00"));
+        battery.setChargeCycles(0);
+        battery.setStatus("IN_USE");
+        battery.setUser(driver);
+        battery.setCurrentStation(null);   // null
+        battery.setCreatedAt(Instant.now());
+        battery.setUpdatedAt(Instant.now());
+
+        batteryRepository.save(battery);
+
+        log.info("[LinkBattery] Tài xế '{}' (id={}) liên kết pin mới serial='{}' → Battery#{}",
+                username, driver.getId(), battery.getSerialNumber(), battery.getId());
+
+        return BatteryResponse.from(battery);
     }
 
     /**

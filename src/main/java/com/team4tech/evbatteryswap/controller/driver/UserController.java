@@ -1,5 +1,6 @@
 package com.team4tech.evbatteryswap.controller.driver;
 
+import com.team4tech.evbatteryswap.dto.request.LinkBatteryRequest;
 import com.team4tech.evbatteryswap.dto.request.RentRequest;
 import com.team4tech.evbatteryswap.dto.request.SupportTicketRequest;
 import com.team4tech.evbatteryswap.dto.request.SwapRequest;
@@ -180,6 +181,29 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+
+
+    @Operation(
+            summary = "Liên kết pin mới (dành cho tài xế mới đăng ký)",
+            description = "Tài xế mới chưa có pin sẽ tự nhập thông tin pin (serialNumber, model, capacityKwh) " +
+                          "để liên kết vào tài khoản. Pin sẽ được tạo mới trong hệ thống với status = IN_USE, station = null."
+    )
+    @PostMapping("/link-battery")
+    public ResponseEntity<?> linkBattery(
+            HttpServletRequest httpRequest,
+            @Valid @RequestBody LinkBatteryRequest linkBatteryRequest
+    ) {
+        String token    = jwtAuthenticationFilter.extractJwtFromRequest(httpRequest);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        try {
+            BatteryResponse response = batterySwapService.linkBattery(username, linkBatteryRequest);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 
 
     @Operation(
