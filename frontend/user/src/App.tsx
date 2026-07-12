@@ -24,6 +24,7 @@ import FAQ from './pages/FAQ';
 import Policies from './pages/Policies';
 import NearestStations from './pages/NearestStations';
 import SwapHistory from './pages/SwapHistory';
+import LinkedBattery from './pages/LinkedBattery';
 
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -60,6 +61,7 @@ function App() {
             <Route path="/station" element={<Station />} />
             <Route path="/my" element={<My />} />
             <Route path="/nearest-stations" element={<NearestStations />} />
+            <Route path="/linked-battery" element={<LinkedBattery />} />
           </Route>
 
           {/* Catch all */}

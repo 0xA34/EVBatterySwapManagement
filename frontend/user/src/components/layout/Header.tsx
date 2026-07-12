@@ -440,6 +440,14 @@ export default function Header() {
                 Liên kết
               </Link>
             </li>
+            {isLoggedIn && (
+              <li>
+                <Link to="/linked-battery" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>
+                  Liên kết pin
+                </Link>
+              </li>
+            )}
             <li>
               <Link to="/packages" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -656,6 +664,11 @@ export default function Header() {
         <Link to="/contact-links" className={`sub-nav-item ${location.pathname === '/contact-links' ? 'active' : ''}`}>
           <span>Liên kết</span>
         </Link>
+        {isLoggedIn && (
+          <Link to="/linked-battery" className={`sub-nav-item ${location.pathname === '/linked-battery' ? 'active' : ''}`}>
+            <span>Liên kết pin</span>
+          </Link>
+        )}
         <Link to="/packages" className={`sub-nav-item ${location.pathname === '/packages' ? 'active' : ''}`}>
           <span>Đăng ký gói</span>
         </Link>
