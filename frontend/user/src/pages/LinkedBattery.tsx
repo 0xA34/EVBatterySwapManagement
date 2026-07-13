@@ -48,7 +48,7 @@ export default function LinkedBattery() {
         },
         body: JSON.stringify({
           serialNumber: serialUpper,
-          model: modelTrimmed.toUpperCase(),
+          model: modelTrimmed,
           capacityKwh: 0,
           currentChargePercentage: 100
         })
@@ -57,7 +57,7 @@ export default function LinkedBattery() {
       if (response.ok) {
         setBattery({
           serialNumber: serialUpper,
-          model: modelTrimmed.toUpperCase()
+          model: modelTrimmed
         });
       } else {
         const errText = await response.text();
@@ -272,17 +272,21 @@ export default function LinkedBattery() {
                     required
                     value={modelInput}
                     onChange={(e) => {
-                      let val = e.target.value.toUpperCase();
+                      let val = e.target.value;
                       const dashIndex = val.indexOf('-');
                       if (dashIndex !== -1) {
-                        const prefix = val.substring(0, dashIndex + 1);
-                        const suffix = val.substring(dashIndex + 1).substring(0, 6);
-                        setModelInput(prefix + suffix);
+                        let prefix = val.substring(0, dashIndex);
+                        prefix = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+                        const suffix = val.substring(dashIndex + 1).toUpperCase().substring(0, 6);
+                        setModelInput(prefix + '-' + suffix);
                       } else {
+                        if (val.length > 0) {
+                          val = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+                        }
                         setModelInput(val);
                       }
                     }}
-                    placeholder="VD: DRIFT-XZMLQA"
+                    placeholder="VD: Drift-XZMLQA"
                     style={{ 
                       width: '100%', 
                       padding: '0.875rem 1rem 0.875rem 3.25rem',
@@ -291,7 +295,6 @@ export default function LinkedBattery() {
                       fontSize: '1rem',
                       outline: 'none',
                       transition: 'all 0.2s ease',
-                      textTransform: 'uppercase',
                       backgroundColor: '#f8fafc'
                     }}
                     onFocus={(e) => {
@@ -308,7 +311,7 @@ export default function LinkedBattery() {
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
-                  {['VERO', 'FELIZ', 'EVO', 'DRIFT'].map((model) => {
+                  {['Vero', 'Feliz', 'Evo', 'Drift'].map((model) => {
                     const isSelected = modelInput.startsWith(model + '-');
                     return (
                       <button
