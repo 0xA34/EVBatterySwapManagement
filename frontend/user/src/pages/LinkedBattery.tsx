@@ -48,9 +48,7 @@ export default function LinkedBattery() {
         },
         body: JSON.stringify({
           serialNumber: serialUpper,
-          model: modelTrimmed,
-          capacityKwh: 0,
-          currentChargePercentage: 100
+          model: modelTrimmed
         })
       });
 
